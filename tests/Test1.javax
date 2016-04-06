@@ -1,0 +1,21 @@
+public class Test1 {
+	int a;
+	
+	public class Dummy{
+		//String a = "";
+	}
+	
+	public void foo(boolean x) {
+		a = false;  // ERROR: incompatible types
+		// Dummy c = new Dummy();
+		String c= "";
+		int b = d;
+		h = b;
+		//break;
+	}
+	
+	Dummy dummy = 1;
+	
+	Dummy hi = new Dummy();
+	String e = hi;
+}
