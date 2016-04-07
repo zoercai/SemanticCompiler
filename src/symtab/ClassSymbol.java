@@ -2,8 +2,8 @@ package symtab;
 
 public class ClassSymbol extends ScopedSymbol implements Type {
 
-	public ClassSymbol(String name) {
-		super(name, null);
+	public ClassSymbol(String name, Scope enclosingScope) {
+		super(name, enclosingScope);
 	}
 
 }

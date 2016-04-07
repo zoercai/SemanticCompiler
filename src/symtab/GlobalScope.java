@@ -16,11 +16,11 @@ public class GlobalScope {//extends BaseScope {
 		define(new BuiltInTypeSymbol("boolean"));
 		define(new BuiltInTypeSymbol("char"));
 		// TODO add all 8 primitives – hard code is okay
-		define(new ClassSymbol("String"));
-		define(new ClassSymbol("HashMap"));
-		
-		define(new ClassSymbol("System"));
-		define(new ClassSymbol("out"));
+//		define(new ClassSymbol("String"));
+//		define(new ClassSymbol("HashMap"));
+//		
+//		define(new ClassSymbol("System"));
+//		define(new ClassSymbol("out"));
 		
 		//define(new MethodSymbol("foo", (symtab.Type)resolve("String")));
 	}

@@ -291,7 +291,6 @@ public final class SemanticsVisitor implements VoidVisitor<Object> {
         }
 
         printer.print(n.getName());
-        currentScope.define(new ClassSymbol(n.getName()));
 
         printTypeParameters(n.getTypeParameters(), arg);
 

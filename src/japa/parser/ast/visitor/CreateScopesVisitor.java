@@ -1,5 +1,7 @@
 package japa.parser.ast.visitor;
 
+import java.util.Iterator;
+
 import japa.parser.ast.BlockComment;
 import japa.parser.ast.CompilationUnit;
 import japa.parser.ast.ImportDeclaration;
@@ -21,6 +23,7 @@ import japa.parser.ast.body.InitializerDeclaration;
 import japa.parser.ast.body.JavadocComment;
 import japa.parser.ast.body.MethodDeclaration;
 import japa.parser.ast.body.Parameter;
+import japa.parser.ast.body.TypeDeclaration;
 import japa.parser.ast.body.VariableDeclarator;
 import japa.parser.ast.body.VariableDeclaratorId;
 import japa.parser.ast.expr.ArrayAccessExpr;
@@ -35,6 +38,7 @@ import japa.parser.ast.expr.ClassExpr;
 import japa.parser.ast.expr.ConditionalExpr;
 import japa.parser.ast.expr.DoubleLiteralExpr;
 import japa.parser.ast.expr.EnclosedExpr;
+import japa.parser.ast.expr.Expression;
 import japa.parser.ast.expr.FieldAccessExpr;
 import japa.parser.ast.expr.InstanceOfExpr;
 import japa.parser.ast.expr.IntegerLiteralExpr;
@@ -70,6 +74,7 @@ import japa.parser.ast.stmt.ForeachStmt;
 import japa.parser.ast.stmt.IfStmt;
 import japa.parser.ast.stmt.LabeledStmt;
 import japa.parser.ast.stmt.ReturnStmt;
+import japa.parser.ast.stmt.Statement;
 import japa.parser.ast.stmt.SwitchEntryStmt;
 import japa.parser.ast.stmt.SwitchStmt;
 import japa.parser.ast.stmt.SynchronizedStmt;
@@ -83,7 +88,11 @@ import japa.parser.ast.type.ReferenceType;
 import japa.parser.ast.type.VoidType;
 import japa.parser.ast.type.WildcardType;
 import symtab.ClassSymbol;
+import symtab.CompilationUnitSymbol;
+import symtab.ConstructorSymbol;
+import symtab.MethodSymbol;
 import symtab.Scope;
+import symtab.VariableSymbol;
 
 public class CreateScopesVisitor implements VoidVisitor<Object>{
 	
@@ -98,7 +107,34 @@ public class CreateScopesVisitor implements VoidVisitor<Object>{
 	@Override
 	public void visit(CompilationUnit n, Object arg) {
 		// TODO Auto-generated method stub
+
+		currentScope = new CompilationUnitSymbol();
 		
+		System.out.println("Compilation created as new currentScope");
+		
+		n.setData(currentScope);
+		
+		// TODO
+//		if (n.getPakage() != null) {
+//			System.out.println("Going into package");
+//            n.getPakage().accept(this, arg);
+//        }
+		
+		// TODO
+//        if (n.getImports() != null) {
+//        	System.out.println("Imports");
+//            for (ImportDeclaration i : n.getImports()) {
+//                i.accept(this, arg);
+//            }
+//        }
+        
+        if (n.getTypes() != null) {
+            for (Iterator<TypeDeclaration> i = n.getTypes().iterator(); i.hasNext();) {
+            	TypeDeclaration typeDecl = i.next();
+            	System.out.println("Going into " + typeDecl.getName());
+            	typeDecl.accept(this, arg);
+            }
+        }
 	}
 
 	@Override
@@ -134,33 +170,40 @@ public class CreateScopesVisitor implements VoidVisitor<Object>{
 	@Override
 	public void visit(ClassOrInterfaceDeclaration n, Object arg) {
 		// TODO interface?
-		// create a new ClassSymbol scope as the currentScope
-		currentScope = new ClassSymbol(n.getName());
+		ClassSymbol classSym = new ClassSymbol(n.getName(), currentScope);
+		currentScope.define(classSym);
 		
-		// set scope into ClassOrInterfaceDeclaration Node
+		currentScope = classSym;
+		
 		n.setData(currentScope);
 		
 		for(BodyDeclaration member : n.getMembers()){
-			member.accept(this, null);
+			if(member instanceof TypeDeclaration){
+				System.out.println("Going into " + ((TypeDeclaration) member).getName());
+			} else {
+				System.out.println("Going into " + member.getClass());
+			}
+			
+			member.accept(this, arg);
 		}
+		
+		currentScope = currentScope.getEnclosingScope();
 	}
 
 	@Override
 	public void visit(EnumDeclaration n, Object arg) {
-		// TODO Auto-generated method stub
-		n.setData(currentScope);
+		// TODO this contains children, need to implement
+		
 	}
 
 	@Override
 	public void visit(EmptyTypeDeclaration n, Object arg) {
-		// TODO Auto-generated method stub
-		
+		// TODO No idea what this is
 	}
 
 	@Override
 	public void visit(EnumConstantDeclaration n, Object arg) {
-		// TODO Auto-generated method stub
-		
+		// TODO part of EnumDeclaration scope
 	}
 
 	@Override
@@ -178,31 +221,54 @@ public class CreateScopesVisitor implements VoidVisitor<Object>{
 	@Override
 	public void visit(FieldDeclaration n, Object arg) {
 		// TODO Auto-generated method stub
+		for(VariableDeclarator variableDeclarator : n.getVariables()){
+			variableDeclarator.accept(this, arg);
+		}
 		
 	}
 
 	@Override
 	public void visit(VariableDeclarator n, Object arg) {
 		// TODO Auto-generated method stub
-		
+		// This is the variable with its initialiser
+		// E.g. a = 3 + 4
+		System.out.println(n.getId());
+		n.setData(currentScope);
 	}
 
 	@Override
 	public void visit(VariableDeclaratorId n, Object arg) {
 		// TODO Auto-generated method stub
-		
+		// This is the name of the variable
 	}
 
 	@Override
 	public void visit(ConstructorDeclaration n, Object arg) {
 		// TODO Auto-generated method stub
+		ConstructorSymbol constructorSym = new ConstructorSymbol(n.getName(), currentScope);
+		currentScope.define(constructorSym);
 		
+		currentScope = constructorSym;
+		
+		n.setData(currentScope);
+		
+		n.getBlock().accept(this, arg);
+		
+		currentScope = currentScope.getEnclosingScope();
 	}
 
 	@Override
 	public void visit(MethodDeclaration n, Object arg) {
-		// TODO Auto-generated method stub
+		MethodSymbol methodSym = new MethodSymbol(n.getName(), currentScope);
+		currentScope.define(methodSym);
 		
+		currentScope = methodSym;
+		
+		n.setData(currentScope);
+		
+		n.getBody().accept(this, arg);
+		
+		currentScope = currentScope.getEnclosingScope();
 	}
 
 	@Override
@@ -214,7 +280,7 @@ public class CreateScopesVisitor implements VoidVisitor<Object>{
 	@Override
 	public void visit(EmptyMemberDeclaration n, Object arg) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Empty member");
 	}
 
 	@Override
@@ -280,7 +346,8 @@ public class CreateScopesVisitor implements VoidVisitor<Object>{
 	@Override
 	public void visit(AssignExpr n, Object arg) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("assign expression: " + n.getTarget());
+		n.setData(currentScope);
 	}
 
 	@Override
@@ -430,7 +497,11 @@ public class CreateScopesVisitor implements VoidVisitor<Object>{
 	@Override
 	public void visit(VariableDeclarationExpr n, Object arg) {
 		// TODO Auto-generated method stub
+		System.out.println("Variable Declaration expression");
 		
+		for(VariableDeclarator variableDeclarator : n.getVars()){
+			variableDeclarator.accept(this, arg);
+		}
 	}
 
 	@Override
@@ -460,31 +531,37 @@ public class CreateScopesVisitor implements VoidVisitor<Object>{
 	@Override
 	public void visit(ExplicitConstructorInvocationStmt n, Object arg) {
 		// TODO Auto-generated method stub
-		
+		// TODO I don't know what this is
 	}
 
 	@Override
 	public void visit(TypeDeclarationStmt n, Object arg) {
 		// TODO Auto-generated method stub
-		
+		n.getTypeDeclaration().accept(this, arg);
 	}
 
 	@Override
 	public void visit(AssertStmt n, Object arg) {
 		// TODO Auto-generated method stub
-		
+        n.getCheck().accept(this, arg);
+        if (n.getMessage() != null) {
+            n.getMessage().accept(this, arg);
+        }
 	}
 
 	@Override
 	public void visit(BlockStmt n, Object arg) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("BlockStmt");
+		for(Statement statement : n.getStmts()){
+			statement.accept(this, arg);
+		}
 	}
 
 	@Override
 	public void visit(LabeledStmt n, Object arg) {
 		// TODO Auto-generated method stub
-		
+		n.getStmt().accept(this, arg);
 	}
 
 	@Override
@@ -496,42 +573,61 @@ public class CreateScopesVisitor implements VoidVisitor<Object>{
 	@Override
 	public void visit(ExpressionStmt n, Object arg) {
 		// TODO Auto-generated method stub
-		
+		n.getExpression().accept(this, arg);
 	}
 
 	@Override
 	public void visit(SwitchStmt n, Object arg) {
 		// TODO Auto-generated method stub
-		
+        n.getSelector().accept(this, arg);
+        if (n.getEntries() != null) {
+            for (SwitchEntryStmt e : n.getEntries()) {
+                e.accept(this, arg);
+            }
+        }
 	}
 
 	@Override
 	public void visit(SwitchEntryStmt n, Object arg) {
 		// TODO Auto-generated method stub
-		
+		if (n.getLabel() != null) {
+            n.getLabel().accept(this, arg);
+        }
+        if (n.getStmts() != null) {
+            for (Statement s : n.getStmts()) {
+                s.accept(this, arg);
+            }
+        }
 	}
 
 	@Override
 	public void visit(BreakStmt n, Object arg) {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void visit(ReturnStmt n, Object arg) {
 		// TODO Auto-generated method stub
-		
+		if (n.getExpr() != null) {
+            n.getExpr().accept(this, arg);
+        }
 	}
 
 	@Override
 	public void visit(IfStmt n, Object arg) {
 		// TODO Auto-generated method stub
-		
+		n.getCondition().accept(this, arg);
+        n.getThenStmt().accept(this, arg);
+        if (n.getElseStmt() != null) {
+            n.getElseStmt().accept(this, arg);
+        }
 	}
 
 	@Override
 	public void visit(WhileStmt n, Object arg) {
 		// TODO Auto-generated method stub
+        n.getCondition().accept(this, arg);
+        n.getBody().accept(this, arg);
 		
 	}
 
@@ -544,43 +640,65 @@ public class CreateScopesVisitor implements VoidVisitor<Object>{
 	@Override
 	public void visit(DoStmt n, Object arg) {
 		// TODO Auto-generated method stub
-		
+        n.getBody().accept(this, arg);
+        n.getCondition().accept(this, arg);
 	}
 
 	@Override
 	public void visit(ForeachStmt n, Object arg) {
 		// TODO Auto-generated method stub
-		
+        n.getVariable().accept(this, arg);
+        n.getIterable().accept(this, arg);
+        n.getBody().accept(this, arg);
 	}
 
 	@Override
 	public void visit(ForStmt n, Object arg) {
 		// TODO Auto-generated method stub
-		
+        if (n.getInit() != null) {
+            for (Iterator<Expression> i = n.getInit().iterator(); i.hasNext();) {
+                Expression e = i.next();
+                e.accept(this, arg);
+            }
+        }
+
+        if (n.getCompare() != null) {
+            n.getCompare().accept(this, arg);
+        }
+
+        if (n.getUpdate() != null) {
+            for (Iterator<Expression> i = n.getUpdate().iterator(); i.hasNext();) {
+                Expression e = i.next();
+                e.accept(this, arg);
+            }
+        }
+        n.getBody().accept(this, arg);
 	}
 
-	@Override
 	public void visit(ThrowStmt n, Object arg) {
-		// TODO Auto-generated method stub
-		
-	}
+        n.getExpr().accept(this, arg);
+    }
 
-	@Override
-	public void visit(SynchronizedStmt n, Object arg) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void visit(SynchronizedStmt n, Object arg) {
+        n.getExpr().accept(this, arg);
+        n.getBlock().accept(this, arg);
+    }
 
-	@Override
-	public void visit(TryStmt n, Object arg) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void visit(TryStmt n, Object arg) {
+        n.getTryBlock().accept(this, arg);
+        if (n.getCatchs() != null) {
+            for (CatchClause c : n.getCatchs()) {
+                c.accept(this, arg);
+            }
+        }
+        if (n.getFinallyBlock() != null) {
+            n.getFinallyBlock().accept(this, arg);
+        }
+    }
 
-	@Override
-	public void visit(CatchClause n, Object arg) {
-		// TODO Auto-generated method stub
-		
-	}
+    public void visit(CatchClause n, Object arg) {
+        n.getExcept().accept(this, arg);
+        n.getCatchBlock().accept(this, arg);
+    }
 	
 }

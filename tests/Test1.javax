@@ -1,17 +1,18 @@
 public class Test1 {
-	int a;
+	int a, b;
 	
 	public class Dummy{
-		//String a = "";
+		String a = "";
 	}
 	
 	public void foo(boolean x) {
 		a = false;  // ERROR: incompatible types
-		// Dummy c = new Dummy();
+		Dummy c = new Dummy();
 		String c= "";
 		int b = d;
 		h = b;
 		//break;
+		int f, g;
 	}
 	
 	Dummy dummy = 1;

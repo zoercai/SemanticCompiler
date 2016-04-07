@@ -24,8 +24,8 @@ public class A2Compiler {
 		JavaParser parser = new JavaParser(new FileReader(file));
 		CompilationUnit ast = parser.CompilationUnit();
 		
-		SillyBreakVisitor sillyVisitor = new SillyBreakVisitor();
-		ast.accept(sillyVisitor, null);
+//		SillyBreakVisitor sillyVisitor = new SillyBreakVisitor();
+//		ast.accept(sillyVisitor, null);
 		
 		CreateScopesVisitor scopesVisitor = new CreateScopesVisitor();
 		ast.accept(scopesVisitor, null);
