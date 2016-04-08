@@ -111,7 +111,7 @@ import japa.parser.ast.type.VoidType;
 import japa.parser.ast.type.WildcardType;
 import se701.A2SemanticsException;
 import symtab.BuiltInTypeSymbol;
-import symtab.ClassSymbol;
+import symtab.ClassOrInterfaceSymbol;
 import symtab.GlobalScope;
 import symtab.Symbol;
 import symtab.VariableSymbol;
@@ -947,26 +947,47 @@ public final class SemanticsVisitor implements VoidVisitor<Object> {
                 printer.print(", ");
             }
             
-            symtab.Type typeOfExpression = getTypeOfExpression(v.getInit());            
-            if(typeOfExpression==null){
-            	throw new A2SemanticsException("Type expressed is not valid on line " + v.getBeginLine());
+            System.out.println(v.getId() + " has expression: " + v.getInit());
+            if(v.getInit()!=null){
+            	symtab.Type typeOfExpression = getTypeOfExpression(v.getInit());            
+                if(typeOfExpression==null){
+                	throw new A2SemanticsException("Type expressed is not valid on line " + v.getBeginLine());
+                }
+                if((symtab.Type)symOfVariableType!=typeOfExpression){
+                	throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to " + type + " on line " + type.getBeginLine());
+                }
             }
-            if((symtab.Type)symOfVariableType!=typeOfExpression){
-            	throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to " + type + " on line " + type.getBeginLine());
-            }
+            
 
             // Checks the name of the variable and adds to scope if valid
             checkName(type, symOfVariableType, v.getId());
         }
     }
+    
+    
+	/**
+	 * Checks if the name of a variable (including field) is valid, if so, add to current scope
+	 * @param type Type of the variable
+	 * @param symOfType Symbol of the variable type
+	 * @param declaratorId The declaration ID
+	 */
+	private void checkName(Type type, Symbol symOfType, VariableDeclaratorId declaratorId) {
+		Symbol declaratorIdSymbol = currentScope.resolve(declaratorId.toString());
+		if(declaratorIdSymbol!=null){
+			throw new A2SemanticsException(declaratorId + " on line " + type.getBeginLine() + " is already defined. Try another name!");
+		}
+		VariableSymbol nameSym = new VariableSymbol(declaratorId.getName(), (symtab.Type) symOfType);
+		currentScope.define(nameSym);
+	}
+	
 
 	private symtab.Type getTypeOfExpression(Expression expression) {
 		symtab.Type type = null;
 		if(expression!=null){
 			Symbol sym = null;
 			if(expression.getClass() == NameExpr.class){
-				//System.out.println(expression.toString() + ": named expression ");
-				sym = currentScope.resolve(expression.toString());
+				System.out.println(expression.toString() + ": named expression ");
+				sym = currentScope.resolve(expression.getClass().toString());
 				
 				if(sym == null){
 					throw new A2SemanticsException(expression + " on line " + expression.getBeginLine() + " is not defined");
@@ -1010,20 +1031,7 @@ public final class SemanticsVisitor implements VoidVisitor<Object> {
 		}
 	}
 
-	/**
-	 * Checks if the name of a variable (including field) is valid, if so, add to current scope
-	 * @param type Type of the variable
-	 * @param symOfType Symbol of the variable type
-	 * @param declaratorId The declaration ID
-	 */
-	private void checkName(Type type, Symbol symOfType, VariableDeclaratorId declaratorId) {
-		Symbol declaratorIdSymbol = currentScope.resolve(declaratorId.toString());
-		if(declaratorIdSymbol!=null){
-			throw new A2SemanticsException(declaratorId + " on line " + type.getBeginLine() + " is already defined. Try another name!");
-		}
-		VariableSymbol nameSym = new VariableSymbol(declaratorId.getName(), (symtab.Type) symOfType);
-		currentScope.define(nameSym);
-	}
+
     
     public void visit(TypeDeclarationStmt n, Object arg) {
         n.getTypeDeclaration().accept(this, arg);

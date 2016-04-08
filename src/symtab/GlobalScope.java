@@ -2,7 +2,7 @@ package symtab;
 
 import java.util.HashMap;
 
-public class GlobalScope {//extends BaseScope {
+public class GlobalScope extends BaseScope {
 	
 	private HashMap<String, Symbol> symbols = new HashMap<String, Symbol>();
 	
@@ -16,7 +16,7 @@ public class GlobalScope {//extends BaseScope {
 		define(new BuiltInTypeSymbol("boolean"));
 		define(new BuiltInTypeSymbol("char"));
 		// TODO add all 8 primitives – hard code is okay
-//		define(new ClassSymbol("String"));
+		define(new ClassOrInterfaceSymbol("String", this, false));
 //		define(new ClassSymbol("HashMap"));
 //		
 //		define(new ClassSymbol("System"));

@@ -9,7 +9,9 @@ import japa.parser.JavaParser;
 import japa.parser.ParseException;
 import japa.parser.ast.CompilationUnit;
 import japa.parser.ast.visitor.SillyBreakVisitor;
+import japa.parser.ast.visitor.CheckInheritanceVisitor;
 import japa.parser.ast.visitor.CreateScopesVisitor;
+import japa.parser.ast.visitor.DefineTerminalVisitor;
 import japa.parser.ast.visitor.DumpVisitor;
 import japa.parser.ast.visitor.SemanticsVisitor;
 
@@ -27,12 +29,17 @@ public class A2Compiler {
 //		SillyBreakVisitor sillyVisitor = new SillyBreakVisitor();
 //		ast.accept(sillyVisitor, null);
 		
+		System.out.println("Adding scope");
 		CreateScopesVisitor scopesVisitor = new CreateScopesVisitor();
 		ast.accept(scopesVisitor, null);
 		
-		// perform visit 1...
-		SemanticsVisitor semanticsVisitor = new SemanticsVisitor();
-		ast.accept(semanticsVisitor, null);
+		System.out.println("Checking inheritance");
+		CheckInheritanceVisitor inheritanceVisitor = new CheckInheritanceVisitor();
+		ast.accept(inheritanceVisitor, null);
+		
+		System.out.println("Checking types");
+		DefineTerminalVisitor terminalVisitor = new DefineTerminalVisitor();
+		ast.accept(terminalVisitor, null);
 		
 		// perform visit 2... etc etc 
 		// ...

@@ -1,20 +1,19 @@
 public class Test1 {
 
-    int a;
+    int a, b, f;
 
-    public class Dummy {
+    public class Dummy extends String {
+
+        String a = "";
     }
 
     public void foo(boolean x) {
-        a = false;
+        a = 4;
+        int h;
         String c = "";
-        String b = c;
-        h = b;
+        h = a;
+        int f, g;
     }
 
-    Dummy dummy = 1;
-
-    Dummy hi = new Dummy();
-
-    String e = hi;
+    String e = "hi";
 }

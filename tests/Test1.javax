@@ -1,22 +1,23 @@
-public class Test1 {
-	int a, b;
+public class Test1{
+	int a, b, f;
 	
-	public class Dummy{
+	public class Dummy extends String{
 		String a = "";
+		// String b = f;
 	}
 	
 	public void foo(boolean x) {
-		a = false;  // ERROR: incompatible types
-		Dummy c = new Dummy();
+		a = 4;  // ERROR: incompatible types
+		//int c = new Dummy();
+		int h;
 		String c= "";
-		int b = d;
-		h = b;
+		// int b = d;
+		h = a;
 		//break;
 		int f, g;
 	}
 	
-	Dummy dummy = 1;
-	
-	Dummy hi = new Dummy();
-	String e = hi;
+	//Dummy dummy = new Dummy();
+	//Dummy hi = new Dummy();
+	String e = "hi";
 }

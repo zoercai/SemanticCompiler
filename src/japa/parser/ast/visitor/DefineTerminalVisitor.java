@@ -85,19 +85,21 @@ import japa.parser.ast.stmt.WhileStmt;
 import japa.parser.ast.type.ClassOrInterfaceType;
 import japa.parser.ast.type.PrimitiveType;
 import japa.parser.ast.type.ReferenceType;
+import japa.parser.ast.type.Type;
 import japa.parser.ast.type.VoidType;
 import japa.parser.ast.type.WildcardType;
+import se701.A2SemanticsException;
 import symtab.ClassOrInterfaceSymbol;
 import symtab.CompilationUnitSymbol;
 import symtab.ConstructorSymbol;
 import symtab.GlobalScope;
 import symtab.MethodSymbol;
 import symtab.Scope;
+import symtab.ScopedSymbol;
+import symtab.Symbol;
 import symtab.VariableSymbol;
 
-public class CreateScopesVisitor implements VoidVisitor<Object> {
-
-	private Scope currentScope;
+public class DefineTerminalVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(Node n, Object arg) {
@@ -106,10 +108,6 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(CompilationUnit n, Object arg) {
-		currentScope = new CompilationUnitSymbol();
-
-		n.setData(currentScope);
-
 		if (n.getTypes() != null) {
 			for (Iterator<TypeDeclaration> i = n.getTypes().iterator(); i.hasNext();) {
 				TypeDeclaration typeDecl = i.next();
@@ -149,19 +147,10 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(ClassOrInterfaceDeclaration n, Object arg) {
-		// TODO interface?
-		ClassOrInterfaceSymbol classSym = new ClassOrInterfaceSymbol(n.getName(), currentScope, n.isInterface());
-		currentScope.define(classSym);
-
-		currentScope = classSym;
-
-		n.setData(currentScope);
-
+		// TODO test interface
 		for (BodyDeclaration member : n.getMembers()) {
 			member.accept(this, arg);
 		}
-
-		currentScope = currentScope.getEnclosingScope();
 	}
 
 	@Override
@@ -221,12 +210,42 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(FieldDeclaration n, Object arg) {
-		n.setData(currentScope);
+		Type type = n.getType();
+		Scope currentScope = (Scope) n.getData();
+		Symbol fieldTypeSym = currentScope.resolve(type.toString());
+
+		// Checks the type of the field
+		checkType(type, fieldTypeSym);
+
+		for (Iterator<VariableDeclarator> i = n.getVariables().iterator(); i.hasNext();) {
+			VariableDeclarator v = i.next();
+			System.out.println(v.getId());
+
+			// Checks expression type is the same as field type
+			if (v.getInit() != null) {
+				symtab.Type typeOfExpression = getTypeOfExpression(v.getInit(), n.getData());
+				if (typeOfExpression == null) {
+					throw new A2SemanticsException("Expression type is not valid on line " + v.getBeginLine());
+				}
+				if ((symtab.Type) fieldTypeSym != typeOfExpression) {
+					throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to " + type
+							+ " on line " + type.getBeginLine());
+				}
+			}
+
+			// Checks the name of the field
+			checkName(currentScope, v.getId());
+			VariableSymbol variableSym = new VariableSymbol(v.getId().getName(), (symtab.Type) fieldTypeSym);
+			((Scope) n.getData()).define(variableSym);
+		}
 	}
 
 	@Override
 	public void visit(VariableDeclarator n, Object arg) {
-		n.setData(currentScope);
+		n.getId().accept(this, arg);
+		if (n.getInit() != null) {
+			n.getInit().accept(this, arg);
+		}
 	}
 
 	@Override
@@ -235,30 +254,46 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(ConstructorDeclaration n, Object arg) {
-		ConstructorSymbol constructorSym = new ConstructorSymbol(n.getName(), currentScope);
-		currentScope.define(constructorSym);
+		if (n.getJavaDoc() != null) {
+			n.getJavaDoc().accept(this, arg);
+		}
+		if (n.getParameters() != null) {
+			for (Iterator<Parameter> i = n.getParameters().iterator(); i.hasNext();) {
+				Parameter p = i.next();
+				p.accept(this, arg);
+			}
+		}
 
-		currentScope = constructorSym;
-
-		n.setData(currentScope);
-
+		if (n.getThrows() != null) {
+			for (Iterator<NameExpr> i = n.getThrows().iterator(); i.hasNext();) {
+				NameExpr name = i.next();
+				name.accept(this, arg);
+			}
+		}
 		n.getBlock().accept(this, arg);
-
-		currentScope = currentScope.getEnclosingScope();
 	}
 
 	@Override
 	public void visit(MethodDeclaration n, Object arg) {
-		MethodSymbol methodSym = new MethodSymbol(n.getName(), currentScope);
-		currentScope.define(methodSym);
-
-		currentScope = methodSym;
-
-		n.setData(currentScope);
-
-		n.getBody().accept(this, arg);
-
-		currentScope = currentScope.getEnclosingScope();
+		if (n.getJavaDoc() != null) {
+			n.getJavaDoc().accept(this, arg);
+		}
+		n.getType().accept(this, arg);
+		if (n.getParameters() != null) {
+			for (Iterator<Parameter> i = n.getParameters().iterator(); i.hasNext();) {
+				Parameter p = i.next();
+				p.accept(this, arg);
+			}
+		}
+		if (n.getThrows() != null) {
+			for (Iterator<NameExpr> i = n.getThrows().iterator(); i.hasNext();) {
+				NameExpr name = i.next();
+				name.accept(this, arg);
+			}
+		}
+		if (n.getBody() != null) {
+			n.getBody().accept(this, arg);
+		}
 	}
 
 	@Override
@@ -347,7 +382,25 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(AssignExpr n, Object arg) {
-		n.setData(currentScope);
+		Scope currentScope = (Scope) n.getData();
+		
+		Symbol variableSym = currentScope.resolve(n.getTarget().toString());
+		
+		if(variableSym == null){
+			throw new A2SemanticsException(n.getTarget().toString() + " is not defined on line " + n.getBeginLine());
+		}
+		
+		symtab.Type typeOfExpression = getTypeOfExpression(n.getValue(), n.getData());
+		if (typeOfExpression == null) {
+			throw new A2SemanticsException("Expression type is not valid on line " + n.getBeginLine());
+		}
+		if ((symtab.Type) variableSym.getType() != typeOfExpression) {
+			throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to " + variableSym.getType().getName()
+					+ " on line " + n.getBeginLine());
+		}
+		
+		n.getTarget().accept(this, arg);
+        n.getValue().accept(this, arg);
 	}
 
 	@Override
@@ -489,7 +542,102 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(VariableDeclarationExpr n, Object arg) {
-		n.setData(currentScope);
+		// Check that the type of the variable is valid (i.e., a class)
+		Type type = n.getType();
+
+		Symbol variableTypeSym = ((Scope) n.getData()).resolve(type.toString());
+		checkType(type, variableTypeSym);
+
+		for (Iterator<VariableDeclarator> i = n.getVars().iterator(); i.hasNext();) {
+			// TODO potentially refactor this and FieldDeclarator into
+			// variableDeclarator visitor
+			VariableDeclarator v = i.next();
+			System.out.println(v.getId() + " has expression: " + v.getInit());
+
+			// Checks expression type is the same as variable type
+			if (v.getInit() != null) {
+				symtab.Type typeOfExpression = getTypeOfExpression(v.getInit(), n.getData());
+				if (typeOfExpression == null) {
+					throw new A2SemanticsException("Expression type is not valid on line " + v.getBeginLine());
+				}
+				if ((symtab.Type) variableTypeSym != typeOfExpression) {
+					throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to " + type
+							+ " on line " + type.getBeginLine());
+				}
+			}
+
+			// Checks variable name hasn't been defined
+			checkName(n.getData(), v.getId());
+
+			// Add variable symbol to scope
+			VariableSymbol variableSym = new VariableSymbol(v.getId().getName(), (symtab.Type) variableTypeSym);
+			((Scope) n.getData()).define(variableSym);
+		}
+	}
+
+	/**
+	 * Checks if the name of a variable (including field) is valid, if so, add
+	 * to current scope
+	 * 
+	 * @param type
+	 *            Type of the variable
+	 * @param declaratorId
+	 *            The declaration ID
+	 */
+	private void checkName(Object currentScope, VariableDeclaratorId declaratorId) {
+		Symbol declaratorIdSymbol = ((ScopedSymbol) currentScope).resolveThisLevel(declaratorId.toString());
+		if (declaratorIdSymbol != null) {
+			throw new A2SemanticsException(declaratorId + " on line " + declaratorId.getBeginLine()
+					+ " is already defined. Try another name!");
+		}
+	}
+
+	private symtab.Type getTypeOfExpression(Expression expression, Object currentScope) {
+		symtab.Type type = null;
+		if (expression != null) {
+			// TODO object creation expression class – i.e. Dummy class
+			if (expression.getClass() == NameExpr.class) {
+				// System.out.println(expression.toString() + ": named
+				// expression ");
+				Symbol expressionTypeSym = ((Scope) currentScope).resolve(expression.toString());
+
+				if (expressionTypeSym == null) {
+					throw new A2SemanticsException(
+							expression + " on line " + expression.getBeginLine() + " is not defined");
+				}
+				if (!(expressionTypeSym.getType() instanceof symtab.Type)) {
+					throw new A2SemanticsException(
+							expression + " on line " + expression.getBeginLine() + " is not valid");
+				}
+
+				type = expressionTypeSym.getType();
+			} else {
+				if (expression.getClass() == IntegerLiteralExpr.class) {
+					type = (symtab.Type) ((Scope) currentScope).resolve("int");
+				} else if (expression.getClass() == StringLiteralExpr.class) {
+					type = (symtab.Type) ((Scope) currentScope).resolve("String");
+				} else if (expression.getClass() == BooleanLiteralExpr.class){
+					type = (symtab.Type) ((Scope) currentScope).resolve("boolean");
+				}
+				// TODO other primitive types (and others?)
+				else {
+					System.out.println("Add " + expression.getClass() + " to getTypeofExpression helper method");
+				}
+			}
+		}
+		return type;
+	}
+
+	private void checkType(Object type, Symbol symOfVarType) {
+		if (symOfVarType == null) {
+			throw new A2SemanticsException(
+					type + " on line " + ((Node) type).getBeginLine() + " is not a defined type");
+		}
+
+		if (!(symOfVarType instanceof symtab.Type)) {
+			// System.out.println(symOfVariableType.getClass());
+			throw new A2SemanticsException(type + " on line " + ((Node) type).getBeginLine() + " is not a valid type");
+		}
 	}
 
 	@Override

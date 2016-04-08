@@ -1,9 +1,19 @@
 package symtab;
 
-public class CompilationUnitSymbol extends ScopedSymbol implements Type {
+public class CompilationUnitSymbol extends ScopedSymbol {
 
 	public CompilationUnitSymbol() {
-		super(null, null);
+		super("Compilation Unit", null);
+		
+		define(new BuiltInTypeSymbol("byte"));
+		define(new BuiltInTypeSymbol("short"));
+		define(new BuiltInTypeSymbol("int"));
+		define(new BuiltInTypeSymbol("long"));
+		define(new BuiltInTypeSymbol("float"));
+		define(new BuiltInTypeSymbol("double"));
+		define(new BuiltInTypeSymbol("boolean"));
+		define(new BuiltInTypeSymbol("char"));
+		
+		define(new ClassOrInterfaceSymbol("String", this, false));
 	}
-
 }

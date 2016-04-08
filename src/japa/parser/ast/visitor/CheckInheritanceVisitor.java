@@ -1,6 +1,7 @@
 package japa.parser.ast.visitor;
 
 import java.util.Iterator;
+import java.util.List;
 
 import japa.parser.ast.BlockComment;
 import japa.parser.ast.CompilationUnit;
@@ -38,7 +39,6 @@ import japa.parser.ast.expr.ClassExpr;
 import japa.parser.ast.expr.ConditionalExpr;
 import japa.parser.ast.expr.DoubleLiteralExpr;
 import japa.parser.ast.expr.EnclosedExpr;
-import japa.parser.ast.expr.Expression;
 import japa.parser.ast.expr.FieldAccessExpr;
 import japa.parser.ast.expr.InstanceOfExpr;
 import japa.parser.ast.expr.IntegerLiteralExpr;
@@ -74,7 +74,6 @@ import japa.parser.ast.stmt.ForeachStmt;
 import japa.parser.ast.stmt.IfStmt;
 import japa.parser.ast.stmt.LabeledStmt;
 import japa.parser.ast.stmt.ReturnStmt;
-import japa.parser.ast.stmt.Statement;
 import japa.parser.ast.stmt.SwitchEntryStmt;
 import japa.parser.ast.stmt.SwitchStmt;
 import japa.parser.ast.stmt.SynchronizedStmt;
@@ -87,598 +86,543 @@ import japa.parser.ast.type.PrimitiveType;
 import japa.parser.ast.type.ReferenceType;
 import japa.parser.ast.type.VoidType;
 import japa.parser.ast.type.WildcardType;
+import se701.A2SemanticsException;
 import symtab.ClassOrInterfaceSymbol;
-import symtab.CompilationUnitSymbol;
-import symtab.ConstructorSymbol;
-import symtab.GlobalScope;
-import symtab.MethodSymbol;
-import symtab.Scope;
-import symtab.VariableSymbol;
+import symtab.Symbol;
 
-public class CreateScopesVisitor implements VoidVisitor<Object> {
-
-	private Scope currentScope;
+public class CheckInheritanceVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(Node n, Object arg) {
-		throw new IllegalStateException(n.getClass().getName());
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(CompilationUnit n, Object arg) {
-		currentScope = new CompilationUnitSymbol();
-
-		n.setData(currentScope);
-
+		// TODO Auto-generated method stub
 		if (n.getTypes() != null) {
-			for (Iterator<TypeDeclaration> i = n.getTypes().iterator(); i.hasNext();) {
-				TypeDeclaration typeDecl = i.next();
-				typeDecl.accept(this, arg);
-			}
-		}
+            for (Iterator<TypeDeclaration> i = n.getTypes().iterator(); i.hasNext();) {
+            	TypeDeclaration typeDecl = i.next();
+            	typeDecl.accept(this, arg);
+            }
+        }
 	}
 
 	@Override
 	public void visit(PackageDeclaration n, Object arg) {
-		n.getName().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ImportDeclaration n, Object arg) {
-		n.getName().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(TypeParameter n, Object arg) {
-		if (n.getTypeBound() != null) {
-			for (Iterator<ClassOrInterfaceType> i = n.getTypeBound().iterator(); i.hasNext();) {
-				ClassOrInterfaceType c = i.next();
-				c.accept(this, arg);
-			}
-		}
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(LineComment n, Object arg) {
-
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(BlockComment n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ClassOrInterfaceDeclaration n, Object arg) {
-		// TODO interface?
-		ClassOrInterfaceSymbol classSym = new ClassOrInterfaceSymbol(n.getName(), currentScope, n.isInterface());
-		currentScope.define(classSym);
-
-		currentScope = classSym;
-
-		n.setData(currentScope);
-
-		for (BodyDeclaration member : n.getMembers()) {
+		System.out.println(n.getName());
+		
+		if(n.getExtends() != null){
+			checkClassOrInterfaceInheritance(n, false);
+		}
+		if(n.getImplements() != null){
+			checkClassOrInterfaceInheritance(n, true);
+		}
+		
+		for(BodyDeclaration member : n.getMembers()){
 			member.accept(this, arg);
 		}
+	}
 
-		currentScope = currentScope.getEnclosingScope();
+	/**
+	 * TODO
+	 * @param n
+	 */
+	private void checkClassOrInterfaceInheritance(ClassOrInterfaceDeclaration n, boolean checkInterface) {
+		// TODO potentially refactor to change n argument to more specific
+		ClassOrInterfaceSymbol currentClassOrInterfaceSym = (ClassOrInterfaceSymbol) n.getData();
+		
+		List<ClassOrInterfaceType> parents;
+		parents = checkInterface ? n.getImplements() : n.getExtends();
+		
+		for(ClassOrInterfaceType parentClassType : parents){
+			Symbol parentSym = currentClassOrInterfaceSym.resolve(parentClassType.getName());
+			
+			if(parentSym == null){
+				throw new A2SemanticsException(parentClassType.getName() + " on line " + parentClassType.getBeginLine() + " is not defined");
+			}
+			if(!(parentSym instanceof ClassOrInterfaceSymbol)){
+				throw new A2SemanticsException(parentClassType.getName() + " on line " + parentClassType.getBeginLine() + " is not a valid class");
+			}
+			if(((ClassOrInterfaceSymbol) parentSym).isInterface() != checkInterface){
+				throw new A2SemanticsException(parentClassType.getName() + " on line " + parentClassType.getBeginLine() + " is not the correct class type");
+			}
+			
+			if(checkInterface){
+				currentClassOrInterfaceSym.addImplement((ClassOrInterfaceSymbol) parentSym);
+			} else {
+				currentClassOrInterfaceSym.addExtend((ClassOrInterfaceSymbol) parentSym);
+			}
+		}
 	}
 
 	@Override
 	public void visit(EnumDeclaration n, Object arg) {
-		// TODO this contains children, need to implement
-		if (n.getImplements() != null) {
-			for (Iterator<ClassOrInterfaceType> i = n.getImplements().iterator(); i.hasNext();) {
-				ClassOrInterfaceType c = i.next();
-				c.accept(this, arg);
-			}
-		}
-
-		if (n.getEntries() != null) {
-			for (Iterator<EnumConstantDeclaration> i = n.getEntries().iterator(); i.hasNext();) {
-				EnumConstantDeclaration e = i.next();
-				e.accept(this, arg);
-			}
-		}
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(EmptyTypeDeclaration n, Object arg) {
-		n.getJavaDoc().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(EnumConstantDeclaration n, Object arg) {
-		if (n.getJavaDoc() != null) {
-			n.getJavaDoc().accept(this, arg);
-		}
-
-		if (n.getArgs() != null) {
-			for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
-				Expression e = i.next();
-				e.accept(this, arg);
-			}
-		}
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(AnnotationDeclaration n, Object arg) {
-		if (n.getJavaDoc() != null) {
-			n.getJavaDoc().accept(this, arg);
-		}
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(AnnotationMemberDeclaration n, Object arg) {
-		if (n.getJavaDoc() != null) {
-			n.getJavaDoc().accept(this, arg);
-		}
-		n.getType().accept(this, arg);
-		if (n.getDefaultValue() != null) {
-			n.getDefaultValue().accept(this, arg);
-		}
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(FieldDeclaration n, Object arg) {
-		n.setData(currentScope);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(VariableDeclarator n, Object arg) {
-		n.setData(currentScope);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(VariableDeclaratorId n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ConstructorDeclaration n, Object arg) {
-		ConstructorSymbol constructorSym = new ConstructorSymbol(n.getName(), currentScope);
-		currentScope.define(constructorSym);
-
-		currentScope = constructorSym;
-
-		n.setData(currentScope);
-
-		n.getBlock().accept(this, arg);
-
-		currentScope = currentScope.getEnclosingScope();
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(MethodDeclaration n, Object arg) {
-		MethodSymbol methodSym = new MethodSymbol(n.getName(), currentScope);
-		currentScope.define(methodSym);
-
-		currentScope = methodSym;
-
-		n.setData(currentScope);
-
-		n.getBody().accept(this, arg);
-
-		currentScope = currentScope.getEnclosingScope();
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(Parameter n, Object arg) {
-		n.getType().accept(this, arg);
-		n.getId().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(EmptyMemberDeclaration n, Object arg) {
-		if (n.getJavaDoc() != null) {
-			n.getJavaDoc().accept(this, arg);
-		}
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(InitializerDeclaration n, Object arg) {
-		if (n.getJavaDoc() != null) {
-            n.getJavaDoc().accept(this, arg);
-        }
-        n.getBlock().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(JavadocComment n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ClassOrInterfaceType n, Object arg) {
-		if (n.getScope() != null) {
-            n.getScope().accept(this, arg);
-        }
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(PrimitiveType n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ReferenceType n, Object arg) {
-		n.getType().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(VoidType n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(WildcardType n, Object arg) {
-        if (n.getExtends() != null) {
-            n.getExtends().accept(this, arg);
-        }
-        if (n.getSuper() != null) {
-            n.getSuper().accept(this, arg);
-        }
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ArrayAccessExpr n, Object arg) {
-		n.getName().accept(this, arg);
-        n.getIndex().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ArrayCreationExpr n, Object arg) {
-        n.getType().accept(this, arg);
-
-        if (n.getDimensions() != null) {
-            for (Expression dim : n.getDimensions()) {
-                dim.accept(this, arg);
-            }
-        } else {
-            n.getInitializer().accept(this, arg);
-        }
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ArrayInitializerExpr n, Object arg) {
-        if (n.getValues() != null) {
-            for (Iterator<Expression> i = n.getValues().iterator(); i.hasNext();) {
-                Expression expr = i.next();
-                expr.accept(this, arg);
-            }
-        }
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(AssignExpr n, Object arg) {
-		n.setData(currentScope);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(BinaryExpr n, Object arg) {
-		n.getLeft().accept(this, arg);
-		n.getRight().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(CastExpr n, Object arg) {
-        n.getType().accept(this, arg);
-        n.getExpr().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ClassExpr n, Object arg) {
-		n.getType().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ConditionalExpr n, Object arg) {
-		n.getCondition().accept(this, arg);
-        n.getThenExpr().accept(this, arg);
-        n.getElseExpr().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(EnclosedExpr n, Object arg) {
-		n.getInner().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(FieldAccessExpr n, Object arg) {
-		 n.getScope().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(InstanceOfExpr n, Object arg) {
-		n.getExpr().accept(this, arg);
-        n.getType().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(StringLiteralExpr n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(IntegerLiteralExpr n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(LongLiteralExpr n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(IntegerLiteralMinValueExpr n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(LongLiteralMinValueExpr n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(CharLiteralExpr n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(DoubleLiteralExpr n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(BooleanLiteralExpr n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(NullLiteralExpr n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(MethodCallExpr n, Object arg) {
-		if (n.getScope() != null) {
-            n.getScope().accept(this, arg);
-        }
-        if (n.getArgs() != null) {
-            for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
-                Expression e = i.next();
-                e.accept(this, arg);
-            }
-        }
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(NameExpr n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ObjectCreationExpr n, Object arg) {
-		if (n.getScope() != null) {
-            n.getScope().accept(this, arg);
-        }
-
-        n.getType().accept(this, arg);
-
-        if (n.getArgs() != null) {
-            for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
-                Expression e = i.next();
-                e.accept(this, arg);
-            }
-        }
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(QualifiedNameExpr n, Object arg) {
-		n.getQualifier().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(SuperMemberAccessExpr n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ThisExpr n, Object arg) {
-		if (n.getClassExpr() != null) {
-            n.getClassExpr().accept(this, arg);
-        }
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(SuperExpr n, Object arg) {
-		if (n.getClassExpr() != null) {
-            n.getClassExpr().accept(this, arg);
-        }
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(UnaryExpr n, Object arg) {
-		n.getExpr().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(VariableDeclarationExpr n, Object arg) {
-		n.setData(currentScope);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(MarkerAnnotationExpr n, Object arg) {
-		n.getName().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(SingleMemberAnnotationExpr n, Object arg) {
-        n.getName().accept(this, arg);
-        n.getMemberValue().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(NormalAnnotationExpr n, Object arg) {
-        n.getName().accept(this, arg);
-        for (Iterator<MemberValuePair> i = n.getPairs().iterator(); i.hasNext();) {
-            MemberValuePair m = i.next();
-            m.accept(this, arg);
-        }
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(MemberValuePair n, Object arg) {
-		n.getValue().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ExplicitConstructorInvocationStmt n, Object arg) {
-		if (!n.isThis()) {
-            if (n.getExpr() != null) {
-                n.getExpr().accept(this, arg);
-            }
-        }
-        if (n.getArgs() != null) {
-            for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
-                Expression e = i.next();
-                e.accept(this, arg);
-            }
-        }
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(TypeDeclarationStmt n, Object arg) {
-		n.getTypeDeclaration().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(AssertStmt n, Object arg) {
-		n.getCheck().accept(this, arg);
-		if (n.getMessage() != null) {
-			n.getMessage().accept(this, arg);
-		}
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(BlockStmt n, Object arg) {
-		System.out.println("BlockStmt");
-		for (Statement statement : n.getStmts()) {
-			statement.accept(this, arg);
-		}
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(LabeledStmt n, Object arg) {
-		n.getStmt().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(EmptyStmt n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ExpressionStmt n, Object arg) {
-		n.getExpression().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(SwitchStmt n, Object arg) {
-		n.getSelector().accept(this, arg);
-		if (n.getEntries() != null) {
-			for (SwitchEntryStmt e : n.getEntries()) {
-				e.accept(this, arg);
-			}
-		}
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(SwitchEntryStmt n, Object arg) {
-		if (n.getLabel() != null) {
-			n.getLabel().accept(this, arg);
-		}
-		if (n.getStmts() != null) {
-			for (Statement s : n.getStmts()) {
-				s.accept(this, arg);
-			}
-		}
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(BreakStmt n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ReturnStmt n, Object arg) {
-		if (n.getExpr() != null) {
-			n.getExpr().accept(this, arg);
-		}
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(IfStmt n, Object arg) {
-		n.getCondition().accept(this, arg);
-		n.getThenStmt().accept(this, arg);
-		if (n.getElseStmt() != null) {
-			n.getElseStmt().accept(this, arg);
-		}
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(WhileStmt n, Object arg) {
-		n.getCondition().accept(this, arg);
-		n.getBody().accept(this, arg);
-
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ContinueStmt n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(DoStmt n, Object arg) {
-		n.getBody().accept(this, arg);
-		n.getCondition().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ForeachStmt n, Object arg) {
-		n.getVariable().accept(this, arg);
-		n.getIterable().accept(this, arg);
-		n.getBody().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override
 	public void visit(ForStmt n, Object arg) {
-		if (n.getInit() != null) {
-			for (Iterator<Expression> i = n.getInit().iterator(); i.hasNext();) {
-				Expression e = i.next();
-				e.accept(this, arg);
-			}
-		}
-
-		if (n.getCompare() != null) {
-			n.getCompare().accept(this, arg);
-		}
-
-		if (n.getUpdate() != null) {
-			for (Iterator<Expression> i = n.getUpdate().iterator(); i.hasNext();) {
-				Expression e = i.next();
-				e.accept(this, arg);
-			}
-		}
-		n.getBody().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
+	@Override
 	public void visit(ThrowStmt n, Object arg) {
-		n.getExpr().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
+	@Override
 	public void visit(SynchronizedStmt n, Object arg) {
-		n.getExpr().accept(this, arg);
-		n.getBlock().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
+	@Override
 	public void visit(TryStmt n, Object arg) {
-		n.getTryBlock().accept(this, arg);
-		if (n.getCatchs() != null) {
-			for (CatchClause c : n.getCatchs()) {
-				c.accept(this, arg);
-			}
-		}
-		if (n.getFinallyBlock() != null) {
-			n.getFinallyBlock().accept(this, arg);
-		}
+		// TODO Auto-generated method stub
+		
 	}
 
+	@Override
 	public void visit(CatchClause n, Object arg) {
-		n.getExcept().accept(this, arg);
-		n.getCatchBlock().accept(this, arg);
+		// TODO Auto-generated method stub
+		
 	}
 
 }
