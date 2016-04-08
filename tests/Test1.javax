@@ -1,5 +1,5 @@
 public class Test1{
-	int a, b, f;
+	int a, b, f, c;
 	
 	public class Dummy extends String{
 		String a = "";
@@ -8,16 +8,16 @@ public class Test1{
 	
 	public void foo(boolean x) {
 		a = 4;  // ERROR: incompatible types
-		//int c = new Dummy();
+		Dummy c = new Dummy();
 		int h;
-		String c= "";
+		String o= "";
 		// int b = d;
 		h = a;
-		//break;
+		// break;  // Can't have break not in loop
 		int f, g;
 	}
 	
-	//Dummy dummy = new Dummy();
-	//Dummy hi = new Dummy();
+	Dummy dummy = new Dummy();
+	Dummy hi = dummy;
 	String e = "hi";
 }

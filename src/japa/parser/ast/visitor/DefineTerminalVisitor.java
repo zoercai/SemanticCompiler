@@ -595,10 +595,8 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 	private symtab.Type getTypeOfExpression(Expression expression, Object currentScope) {
 		symtab.Type type = null;
 		if (expression != null) {
-			// TODO object creation expression class – i.e. Dummy class
 			if (expression.getClass() == NameExpr.class) {
-				// System.out.println(expression.toString() + ": named
-				// expression ");
+				// System.out.println(expression.toString() + ": named expression ");
 				Symbol expressionTypeSym = ((Scope) currentScope).resolve(expression.toString());
 
 				if (expressionTypeSym == null) {
@@ -611,6 +609,24 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 				}
 
 				type = expressionTypeSym.getType();
+			} else if(expression.getClass() == ObjectCreationExpr.class){
+				// TODO refactor into method with the if above
+				Symbol expressionTypeSym = ((Scope) currentScope).resolve(((ObjectCreationExpr) expression).getType().toString());
+				
+				if (expressionTypeSym == null){
+					throw new A2SemanticsException(
+							expression + " on line " + expression.getBeginLine() + " is not defined");
+				}
+				if (!(expressionTypeSym instanceof symtab.ClassOrInterfaceSymbol)) {
+					throw new A2SemanticsException(
+							expression + " on line " + expression.getBeginLine() + " is not valid");
+				}
+				// Checks that the expression is a class, not interface
+				if(((ClassOrInterfaceSymbol) expressionTypeSym).isInterface()){
+					throw new A2SemanticsException(
+							expression + " on line " + expression.getBeginLine() + " is not a class");
+				}
+				type = (symtab.Type) expressionTypeSym;
 			} else {
 				if (expression.getClass() == IntegerLiteralExpr.class) {
 					type = (symtab.Type) ((Scope) currentScope).resolve("int");
@@ -696,8 +712,10 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(BlockStmt n, Object arg) {
 		System.out.println("BlockStmt");
-		for (Statement statement : n.getStmts()) {
-			statement.accept(this, arg);
+		if(n.getStmts()!=null){
+			for (Statement statement : n.getStmts()) {
+				statement.accept(this, arg);
+			}
 		}
 	}
 

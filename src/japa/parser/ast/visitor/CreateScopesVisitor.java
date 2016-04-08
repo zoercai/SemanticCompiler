@@ -548,8 +548,10 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(BlockStmt n, Object arg) {
 		System.out.println("BlockStmt");
-		for (Statement statement : n.getStmts()) {
-			statement.accept(this, arg);
+		if(n.getStmts()!=null){
+			for (Statement statement : n.getStmts()) {
+				statement.accept(this, arg);
+			}
 		}
 	}
 
