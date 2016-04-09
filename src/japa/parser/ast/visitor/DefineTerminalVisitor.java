@@ -220,7 +220,6 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 
 		for (Iterator<VariableDeclarator> i = n.getVariables().iterator(); i.hasNext();) {
 			VariableDeclarator v = i.next();
-			System.out.println(v.getId());
 
 			// Checks expression type is the same as field type
 			if (v.getInit() != null) {
@@ -396,16 +395,9 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 		if (typeOfExpression == null) {
 			throw new A2SemanticsException("Expression type is not valid on line " + n.getBeginLine());
 		}
-		System.out.println(typeOfExpression);
 		if ((symtab.Type) variableSym.getType() != typeOfExpression) {
 			throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to "
 					+ variableSym.getType().getName() + " on line " + n.getBeginLine());
-		}
-		
-		// Checks that the expression variable (not field, as implicit value) has a value
-		VariableSymbol expressionSymbol = (VariableSymbol) currentScope.resolve(n.getValue().toString());
-		if (expressionSymbol instanceof VariableSymbol && (!expressionSymbol.isField()) && expressionSymbol.getValueAssigned()==null){
-			throw new A2SemanticsException("Variable \"" + expressionSymbol.getName() + "\" has not been assigned a value on line " + n.getBeginLine());
 		}
 		
 		((VariableSymbol) variableSym).setValueAssigned(n.getValue());
@@ -606,7 +598,7 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 			// TODO potentially refactor this and FieldDeclarator into
 			// variableDeclarator visitor
 			VariableDeclarator v = i.next();
-			System.out.println(v.getId() + " has expression: " + v.getInit());
+			// System.out.println(v.getId() + " has expression: " + v.getInit());
 
 			if (v.getInit() != null) {
 				// Checks expression type is the same as variable type
@@ -617,12 +609,6 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 				if ((symtab.Type) variableTypeSym != typeOfExpression) {
 					throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to " + type
 							+ " on line " + type.getBeginLine());
-				}
-				
-				// Checks that the expression variable (not field, as implicit value) has a value
-				VariableSymbol expressionSymbol = (VariableSymbol) currentScope.resolve(v.getInit().toString());
-				if (expressionSymbol instanceof VariableSymbol && (!expressionSymbol.isField()) && expressionSymbol.getValueAssigned()==null){
-					throw new A2SemanticsException("Variable \"" + expressionSymbol.getName() + "\" has not been assigned a value on line " + n.getBeginLine());
 				}
 			}
 
@@ -651,22 +637,26 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 	private symtab.Type getTypeOfExpression(Expression expression, Object scope) {
 		symtab.Type type = null;
 		Scope currentScope = (Scope) scope;
+		
 		if (expression != null) {
 			if (expression.getClass() == NameExpr.class) {
-				// If it's a name, check that it's defined and that its type is a class
-				
-				Symbol expressionTypeSym = currentScope.resolve(expression.toString());
-
-				if (expressionTypeSym == null) {
+				// Check that the expression variable is defined and that its type is a class
+				Symbol expressionSymbol = currentScope.resolve(expression.toString());
+				if (expressionSymbol == null) {
 					throw new A2SemanticsException(
 							expression + " on line " + expression.getBeginLine() + " is not defined");
 				}
-				if (!(expressionTypeSym.getType() instanceof symtab.Type)) {
+				if (!(expressionSymbol.getType() instanceof symtab.Type)) {
 					throw new A2SemanticsException(
 							expression + " on line " + expression.getBeginLine() + " is not a valid type");
 				}
+				
+				// Checks that the expression variable (not field, as implicit value) has a value
+				if ((!((VariableSymbol) expressionSymbol).isField()) && ((VariableSymbol) expressionSymbol).getValueAssigned()==null){
+					throw new A2SemanticsException("Variable \"" + expressionSymbol.getName() + "\" has not been assigned a value on line " + expression.getBeginLine());
+				}
 
-				type = expressionTypeSym.getType();
+				type = expressionSymbol.getType();
 			} else if (expression.getClass() == ObjectCreationExpr.class) {
 				// If it's a constructor, check that it's constructing a class
 				
@@ -783,7 +773,6 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(BlockStmt n, Object arg) {
-		System.out.println("BlockStmt");
 		if (n.getStmts() != null) {
 			for (Statement statement : n.getStmts()) {
 				statement.accept(this, arg);

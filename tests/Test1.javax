@@ -4,7 +4,7 @@ public class Test1{
 	Dummy dummy = new Dummy();
 	Dummy hi = dummy;
 	String e = "hi";
-	int unassigned = c;
+	int unassignedField = a;
 	
 	public class Dummy extends String{
 		String a = "";
@@ -20,9 +20,10 @@ public class Test1{
 		Dummy c = new Dummy();
 		int h;
 		String o= "";
-		// int b = 4;
-		// h = foo(true);
-		int eija = h;
+		int b = 4;
+		//h = foo(true);
+		b = h;
+		// int eija = h + 3;
 		// break;  // Can't have break not in loop
 		int f, g;
 	}
