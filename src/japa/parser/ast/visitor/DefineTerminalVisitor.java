@@ -60,6 +60,7 @@ import japa.parser.ast.expr.SuperExpr;
 import japa.parser.ast.expr.SuperMemberAccessExpr;
 import japa.parser.ast.expr.ThisExpr;
 import japa.parser.ast.expr.UnaryExpr;
+import japa.parser.ast.expr.UnaryExpr.Operator;
 import japa.parser.ast.expr.VariableDeclarationExpr;
 import japa.parser.ast.stmt.AssertStmt;
 import japa.parser.ast.stmt.BlockStmt;
@@ -704,6 +705,15 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 				type = leftType;
 			} else if(expression.getClass() == UnaryExpr.class){
 				type = getTypeOfExpression(((UnaryExpr) expression).getExpr(), currentScope);
+				
+				// Checks expression operand can be used with the operator
+				Operator operator = ((UnaryExpr) expression).getOperator();
+				if((!isNumberClass(type)) && isNumberOperator(operator)){
+					throw new A2SemanticsException("Bad operand type " + type.getName() + " for unary operator " + operator + " on line " + expression.getBeginLine());
+				}
+				if((!type.getName().equals("boolean")) && operator==Operator.not){
+					throw new A2SemanticsException("Bad operand type " + type.getName() + " for unary operator " + operator + " on line " + expression.getBeginLine());
+				}
 			} else {
 				if (expression.getClass() == IntegerLiteralExpr.class) {
 					type = (symtab.Type) currentScope.resolve("int");
@@ -727,6 +737,20 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 			}
 		}
 		return type;
+	}
+	
+	private boolean isNumberClass(symtab.Type type){
+		if(type.getName().equals("int") || type.getName().equals("long") || type.getName().equals("char") ||type.getName().equals("double")){
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean isNumberOperator(Operator operator){
+		if(operator == Operator.positive || operator==Operator.negative || operator==Operator.preIncrement || operator==Operator.preDecrement || operator==Operator.posIncrement || operator==Operator.preDecrement){
+			return true;
+		}
+		return false;
 	}
 
 	private void checkType(Object type, Symbol symOfVarType) {

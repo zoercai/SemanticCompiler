@@ -25,8 +25,8 @@ public class Test1{
 		b = h;
 		int eija = b + 4 + 9;
 		eija += b;
-		eija = 4++;
-		String j = null;
+		eija = b++;
+		// String j = o++;
 		Dummy i = null;
 		// int i = null;
 		// break;  // Can't have break not in loop

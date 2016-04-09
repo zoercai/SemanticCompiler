@@ -29,8 +29,7 @@ public class Test1 {
         b = h;
         int eija = b + 4 + 9;
         eija += b;
-        eija = 4++;
-        String j = null;
+        eija = b++;
         Dummy i = null;
         int f, g;
     }
