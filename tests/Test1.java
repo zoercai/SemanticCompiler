@@ -8,7 +8,7 @@ public class Test1 {
 
     String e = "hi";
 
-    int unassigned = c;
+    int unassignedField = a;
 
     public class Dummy extends String {
 
@@ -24,8 +24,13 @@ public class Test1 {
         Dummy c = new Dummy();
         int h;
         String o = "";
+        int b = 4;
         h = foo(true);
-        int eija = h;
+        b = h;
+        int eija = b + 4 + 9;
+        eija += b;
+        eija = 4++;
+        String j = null;
         int f, g;
     }
 }

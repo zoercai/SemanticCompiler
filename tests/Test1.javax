@@ -21,9 +21,13 @@ public class Test1{
 		int h;
 		String o= "";
 		int b = 4;
-		//h = foo(true);
+		h = foo(true);
 		b = h;
-		// int eija = h + 3;
+		int eija = b + 4 + 9;
+		eija += b;
+		eija = 4++;
+		String j = null; 	// TODO potentially
+		// Dummy i = null;	// TODO
 		// break;  // Can't have break not in loop
 		int f, g;
 	}

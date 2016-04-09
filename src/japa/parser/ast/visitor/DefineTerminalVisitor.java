@@ -659,11 +659,10 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 				type = expressionSymbol.getType();
 			} else if (expression.getClass() == ObjectCreationExpr.class) {
 				// If it's a constructor, check that it's constructing a class
-				
-				// TODO refactor into method with the if above
 				Symbol expressionTypeSym = currentScope
 						.resolve(((ObjectCreationExpr) expression).getType().toString());
 
+				// Checks that the constructor class has been defined
 				if (expressionTypeSym == null) {
 					throw new A2SemanticsException(
 							expression + " on line " + expression.getBeginLine() + " is not defined");
@@ -689,15 +688,37 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 				
 				type = (symtab.Type) currentScope.resolve(((MethodSymbol) methodSym).getReturnType().toString());
 			
+			} else if(expression.getClass() == BinaryExpr.class){
+				System.out.println(expression);
+				// If it's an operation expression
+				System.out.println("Binary expression on line: " + expression.getBeginLine());
+				// Check left and right expressions are of the same type
+				symtab.Type leftType = getTypeOfExpression(((BinaryExpr) expression).getLeft(), currentScope);
+				symtab.Type rightType = getTypeOfExpression(((BinaryExpr) expression).getRight(), currentScope);
+				if(leftType!=rightType){
+					throw new A2SemanticsException("Cannot add " + leftType.getName() + " to " + rightType.getName() + " on line " + expression.getBeginLine());
+				}
+				type = leftType;
+			} else if(expression.getClass() == UnaryExpr.class){
+				type = getTypeOfExpression(((UnaryExpr) expression).getExpr(), currentScope);
 			} else {
 				if (expression.getClass() == IntegerLiteralExpr.class) {
 					type = (symtab.Type) currentScope.resolve("int");
-				} else if (expression.getClass() == StringLiteralExpr.class) {
-					type = (symtab.Type) currentScope.resolve("String");
 				} else if (expression.getClass() == BooleanLiteralExpr.class) {
 					type = (symtab.Type) currentScope.resolve("boolean");
+				}  else if (expression.getClass() == LongLiteralExpr.class) {
+					type = (symtab.Type) currentScope.resolve("long");
+				} else if (expression.getClass() == CharLiteralExpr.class) {
+					type = (symtab.Type) currentScope.resolve("char");
+				} else if (expression.getClass() == DoubleLiteralExpr.class) {
+					type = (symtab.Type) currentScope.resolve("double");
+				}  else if (expression.getClass() == NullLiteralExpr.class) {
+					// TODO null should not resolve to String
+					type = (symtab.Type) currentScope.resolve("String");
+				} else if (expression.getClass() == StringLiteralExpr.class) {
+					type = (symtab.Type) currentScope.resolve("String");
 				}
-				// TODO other primitive types (and others?)
+				// TODO other types
 				else {
 					System.out.println("Add " + expression.getClass() + " to getTypeofExpression helper method");
 				}

@@ -13,6 +13,7 @@ public class CompilationUnitSymbol extends ScopedSymbol {
 		define(new BuiltInTypeSymbol("double"));
 		define(new BuiltInTypeSymbol("boolean"));
 		define(new BuiltInTypeSymbol("char"));
+		define(new BuiltInTypeSymbol("void"));
 		
 		define(new ClassOrInterfaceSymbol("String", this, false));
 	}
