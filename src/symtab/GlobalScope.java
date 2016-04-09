@@ -15,7 +15,7 @@ public class GlobalScope extends BaseScope {
 		define(new BuiltInTypeSymbol("double"));
 		define(new BuiltInTypeSymbol("boolean"));
 		define(new BuiltInTypeSymbol("char"));
-		// TODO add all 8 primitives – hard code is okay
+		
 		define(new ClassOrInterfaceSymbol("String", this, false));
 //		define(new ClassSymbol("HashMap"));
 //		
@@ -26,7 +26,6 @@ public class GlobalScope extends BaseScope {
 	}
 	
 	public String getScopeName() {
-		// TODO change to different specific scope names
 		return "Global Scope";
 	}
 

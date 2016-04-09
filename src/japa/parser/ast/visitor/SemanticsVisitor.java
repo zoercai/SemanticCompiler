@@ -976,8 +976,8 @@ public final class SemanticsVisitor implements VoidVisitor<Object> {
 		if(declaratorIdSymbol!=null){
 			throw new A2SemanticsException(declaratorId + " on line " + type.getBeginLine() + " is already defined. Try another name!");
 		}
-		VariableSymbol nameSym = new VariableSymbol(declaratorId.getName(), (symtab.Type) symOfType);
-		currentScope.define(nameSym);
+		//VariableSymbol nameSym = new VariableSymbol(declaratorId.getName(), (symtab.Type) symOfType);
+		//currentScope.define(nameSym);
 	}
 	
 

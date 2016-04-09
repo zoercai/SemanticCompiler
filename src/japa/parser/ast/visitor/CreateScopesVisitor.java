@@ -226,7 +226,10 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(VariableDeclarator n, Object arg) {
-		n.setData(currentScope);
+		n.getId().accept(this, arg);
+        if (n.getInit() != null) {
+            n.getInit().accept(this, arg);
+        }
 	}
 
 	@Override
@@ -249,7 +252,8 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(MethodDeclaration n, Object arg) {
-		MethodSymbol methodSym = new MethodSymbol(n.getName(), currentScope);
+		MethodSymbol methodSym = new MethodSymbol(n.getName(), currentScope, n.getParameters(), n.getType());
+		
 		currentScope.define(methodSym);
 
 		currentScope = methodSym;
@@ -348,6 +352,8 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(AssignExpr n, Object arg) {
 		n.setData(currentScope);
+		n.getTarget().accept(this, arg);
+		n.getValue().accept(this, arg);
 	}
 
 	@Override
@@ -428,6 +434,8 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(MethodCallExpr n, Object arg) {
+		System.out.println(n.getName() + " on line " + n.getBeginLine());
+		n.setData(currentScope);
 		if (n.getScope() != null) {
             n.getScope().accept(this, arg);
         }
@@ -490,6 +498,13 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(VariableDeclarationExpr n, Object arg) {
 		n.setData(currentScope);
+		
+        n.getType().accept(this, arg);
+
+        for (Iterator<VariableDeclarator> i = n.getVars().iterator(); i.hasNext();) {
+            VariableDeclarator v = i.next();
+            v.accept(this, arg);
+        }
 	}
 
 	@Override
@@ -547,7 +562,6 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(BlockStmt n, Object arg) {
-		System.out.println("BlockStmt");
 		if(n.getStmts()!=null){
 			for (Statement statement : n.getStmts()) {
 				statement.accept(this, arg);

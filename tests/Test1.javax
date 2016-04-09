@@ -1,23 +1,29 @@
 public class Test1{
 	int a, b, f, c;
 	
-	public class Dummy extends String{
-		String a = "";
-		// String b = f;
-	}
-	
-	public void foo(boolean x) {
-		a = 4;  // ERROR: incompatible types
-		Dummy c = new Dummy();
-		int h;
-		String o= "";
-		// int b = d;
-		h = a;
-		// break;  // Can't have break not in loop
-		int f, g;
-	}
-	
 	Dummy dummy = new Dummy();
 	Dummy hi = dummy;
 	String e = "hi";
+	int unassigned = c;
+	
+	public class Dummy extends String{
+		String a = "";
+		// String b = f;
+		
+		int test(){
+			foo(false);
+		}
+	}
+	
+	public int foo(boolean x) {
+		int a;  // ERROR: incompatible types
+		Dummy c = new Dummy();
+		int h;
+		String o= "";
+		// int b = 4;
+		// h = foo(true);
+		int eija = h;
+		// break;  // Can't have break not in loop
+		int f, g;
+	}
 }

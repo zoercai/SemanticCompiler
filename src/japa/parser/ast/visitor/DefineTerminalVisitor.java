@@ -1,6 +1,7 @@
 package japa.parser.ast.visitor;
 
 import java.util.Iterator;
+import java.util.List;
 
 import japa.parser.ast.BlockComment;
 import japa.parser.ast.CompilationUnit;
@@ -235,7 +236,7 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 
 			// Checks the name of the field
 			checkName(currentScope, v.getId());
-			VariableSymbol variableSym = new VariableSymbol(v.getId().getName(), (symtab.Type) fieldTypeSym);
+			VariableSymbol variableSym = new VariableSymbol(v.getId().getName(), (symtab.Type) fieldTypeSym, v.getInit(), true);
 			((Scope) n.getData()).define(variableSym);
 		}
 	}
@@ -312,9 +313,9 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(InitializerDeclaration n, Object arg) {
 		if (n.getJavaDoc() != null) {
-            n.getJavaDoc().accept(this, arg);
-        }
-        n.getBlock().accept(this, arg);
+			n.getJavaDoc().accept(this, arg);
+		}
+		n.getBlock().accept(this, arg);
 	}
 
 	@Override
@@ -324,8 +325,8 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(ClassOrInterfaceType n, Object arg) {
 		if (n.getScope() != null) {
-            n.getScope().accept(this, arg);
-        }
+			n.getScope().accept(this, arg);
+		}
 	}
 
 	@Override
@@ -343,64 +344,74 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(WildcardType n, Object arg) {
-        if (n.getExtends() != null) {
-            n.getExtends().accept(this, arg);
-        }
-        if (n.getSuper() != null) {
-            n.getSuper().accept(this, arg);
-        }
+		if (n.getExtends() != null) {
+			n.getExtends().accept(this, arg);
+		}
+		if (n.getSuper() != null) {
+			n.getSuper().accept(this, arg);
+		}
 	}
 
 	@Override
 	public void visit(ArrayAccessExpr n, Object arg) {
 		n.getName().accept(this, arg);
-        n.getIndex().accept(this, arg);
+		n.getIndex().accept(this, arg);
 	}
 
 	@Override
 	public void visit(ArrayCreationExpr n, Object arg) {
-        n.getType().accept(this, arg);
+		n.getType().accept(this, arg);
 
-        if (n.getDimensions() != null) {
-            for (Expression dim : n.getDimensions()) {
-                dim.accept(this, arg);
-            }
-        } else {
-            n.getInitializer().accept(this, arg);
-        }
+		if (n.getDimensions() != null) {
+			for (Expression dim : n.getDimensions()) {
+				dim.accept(this, arg);
+			}
+		} else {
+			n.getInitializer().accept(this, arg);
+		}
 	}
 
 	@Override
 	public void visit(ArrayInitializerExpr n, Object arg) {
-        if (n.getValues() != null) {
-            for (Iterator<Expression> i = n.getValues().iterator(); i.hasNext();) {
-                Expression expr = i.next();
-                expr.accept(this, arg);
-            }
-        }
+		if (n.getValues() != null) {
+			for (Iterator<Expression> i = n.getValues().iterator(); i.hasNext();) {
+				Expression expr = i.next();
+				expr.accept(this, arg);
+			}
+		}
 	}
 
 	@Override
 	public void visit(AssignExpr n, Object arg) {
 		Scope currentScope = (Scope) n.getData();
 		
+		// Checks that the variable exists
 		Symbol variableSym = currentScope.resolve(n.getTarget().toString());
-		
-		if(variableSym == null){
+		if (variableSym == null) {
 			throw new A2SemanticsException(n.getTarget().toString() + " is not defined on line " + n.getBeginLine());
 		}
-		
+
+		// Checks that the expression variable type matches the variable type
 		symtab.Type typeOfExpression = getTypeOfExpression(n.getValue(), n.getData());
 		if (typeOfExpression == null) {
 			throw new A2SemanticsException("Expression type is not valid on line " + n.getBeginLine());
 		}
+		System.out.println(typeOfExpression);
 		if ((symtab.Type) variableSym.getType() != typeOfExpression) {
-			throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to " + variableSym.getType().getName()
-					+ " on line " + n.getBeginLine());
+			throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to "
+					+ variableSym.getType().getName() + " on line " + n.getBeginLine());
 		}
 		
+		// Checks that the expression variable (not field, as implicit value) has a value
+		VariableSymbol expressionSymbol = (VariableSymbol) currentScope.resolve(n.getValue().toString());
+		if (expressionSymbol instanceof VariableSymbol && (!expressionSymbol.isField()) && expressionSymbol.getValueAssigned()==null){
+			throw new A2SemanticsException("Variable \"" + expressionSymbol.getName() + "\" has not been assigned a value on line " + n.getBeginLine());
+		}
+		
+		((VariableSymbol) variableSym).setValueAssigned(n.getValue());
+
 		n.getTarget().accept(this, arg);
-        n.getValue().accept(this, arg);
+		n.getValue().accept(this, arg);
 	}
 
 	@Override
@@ -411,8 +422,8 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(CastExpr n, Object arg) {
-        n.getType().accept(this, arg);
-        n.getExpr().accept(this, arg);
+		n.getType().accept(this, arg);
+		n.getExpr().accept(this, arg);
 	}
 
 	@Override
@@ -423,8 +434,8 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(ConditionalExpr n, Object arg) {
 		n.getCondition().accept(this, arg);
-        n.getThenExpr().accept(this, arg);
-        n.getElseExpr().accept(this, arg);
+		n.getThenExpr().accept(this, arg);
+		n.getElseExpr().accept(this, arg);
 	}
 
 	@Override
@@ -434,13 +445,13 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(FieldAccessExpr n, Object arg) {
-		 n.getScope().accept(this, arg);
+		n.getScope().accept(this, arg);
 	}
 
 	@Override
 	public void visit(InstanceOfExpr n, Object arg) {
 		n.getExpr().accept(this, arg);
-        n.getType().accept(this, arg);
+		n.getType().accept(this, arg);
 	}
 
 	@Override
@@ -482,14 +493,56 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(MethodCallExpr n, Object arg) {
 		if (n.getScope() != null) {
-            n.getScope().accept(this, arg);
-        }
-        if (n.getArgs() != null) {
-            for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
-                Expression e = i.next();
-                e.accept(this, arg);
-            }
-        }
+			n.getScope().accept(this, arg);
+		}
+		if (n.getArgs() != null) {
+			// Check if method call arguments exist and types are consistent with method parameters
+			checkMethodCall(n);
+			
+			for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
+				Expression e = i.next();
+				
+				e.accept(this, arg);
+			}
+		}
+	}
+
+	/**
+	 * @param n
+	 */
+	private void checkMethodCall(MethodCallExpr expression) {
+		Scope currentScope = (Scope) expression.getData();
+		
+		// Check if method exists
+		Symbol methodSym = currentScope.resolve(expression.getName());
+		if(methodSym == null){
+			throw new A2SemanticsException(
+					expression + " on line " + expression.getBeginLine() + " is not defined");
+		}
+		
+		// Check if method call arguments exist and types are consistent with method parameters
+		List<Parameter> methodParameters = ((MethodSymbol) methodSym).getParameters();
+		List<Expression> methodArguments = expression.getArgs();
+		if(methodParameters!=null && methodArguments !=null){
+			// Check number of arguments & parameters are the same
+			if(methodParameters.size()!=methodArguments.size()){
+				throw new A2SemanticsException("Method call doesn't match method signature on line " + expression.getBeginLine());
+			}
+			// Check types are the same
+			for(int i = 0; i<methodParameters.size(); i++){
+				Expression argumentExpression = expression.getArgs().get(i);
+				Parameter parameter = methodParameters.get(i);
+				
+				// Check argument name exists (by calling getTypeOfExpression, which also returns the type), and checks if types match
+				if(!getTypeOfExpression(argumentExpression, currentScope).getName().equals(parameter.getType().toString())){
+					throw new A2SemanticsException("Method call argument type doesn't match method signature on line " + expression.getBeginLine());
+				}
+			}
+		} else if(methodParameters==null && methodArguments==null){
+			// do nothing
+		} else{
+			throw new A2SemanticsException("Method call doesn't match method signature on line " + expression.getBeginLine());
+		}
 	}
 
 	@Override
@@ -499,17 +552,17 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(ObjectCreationExpr n, Object arg) {
 		if (n.getScope() != null) {
-            n.getScope().accept(this, arg);
-        }
+			n.getScope().accept(this, arg);
+		}
 
-        n.getType().accept(this, arg);
+		n.getType().accept(this, arg);
 
-        if (n.getArgs() != null) {
-            for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
-                Expression e = i.next();
-                e.accept(this, arg);
-            }
-        }
+		if (n.getArgs() != null) {
+			for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
+				Expression e = i.next();
+				e.accept(this, arg);
+			}
+		}
 	}
 
 	@Override
@@ -524,15 +577,15 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(ThisExpr n, Object arg) {
 		if (n.getClassExpr() != null) {
-            n.getClassExpr().accept(this, arg);
-        }
+			n.getClassExpr().accept(this, arg);
+		}
 	}
 
 	@Override
 	public void visit(SuperExpr n, Object arg) {
 		if (n.getClassExpr() != null) {
-            n.getClassExpr().accept(this, arg);
-        }
+			n.getClassExpr().accept(this, arg);
+		}
 	}
 
 	@Override
@@ -543,9 +596,10 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(VariableDeclarationExpr n, Object arg) {
 		// Check that the type of the variable is valid (i.e., a class)
+		Scope currentScope = (Scope) n.getData();
 		Type type = n.getType();
 
-		Symbol variableTypeSym = ((Scope) n.getData()).resolve(type.toString());
+		Symbol variableTypeSym = currentScope.resolve(type.toString());
 		checkType(type, variableTypeSym);
 
 		for (Iterator<VariableDeclarator> i = n.getVars().iterator(); i.hasNext();) {
@@ -554,8 +608,8 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 			VariableDeclarator v = i.next();
 			System.out.println(v.getId() + " has expression: " + v.getInit());
 
-			// Checks expression type is the same as variable type
 			if (v.getInit() != null) {
+				// Checks expression type is the same as variable type
 				symtab.Type typeOfExpression = getTypeOfExpression(v.getInit(), n.getData());
 				if (typeOfExpression == null) {
 					throw new A2SemanticsException("Expression type is not valid on line " + v.getBeginLine());
@@ -564,25 +618,27 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 					throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to " + type
 							+ " on line " + type.getBeginLine());
 				}
+				
+				// Checks that the expression variable (not field, as implicit value) has a value
+				VariableSymbol expressionSymbol = (VariableSymbol) currentScope.resolve(v.getInit().toString());
+				if (expressionSymbol instanceof VariableSymbol && (!expressionSymbol.isField()) && expressionSymbol.getValueAssigned()==null){
+					throw new A2SemanticsException("Variable \"" + expressionSymbol.getName() + "\" has not been assigned a value on line " + n.getBeginLine());
+				}
 			}
 
 			// Checks variable name hasn't been defined
 			checkName(n.getData(), v.getId());
 
 			// Add variable symbol to scope
-			VariableSymbol variableSym = new VariableSymbol(v.getId().getName(), (symtab.Type) variableTypeSym);
+			VariableSymbol variableSym = new VariableSymbol(v.getId().getName(), (symtab.Type) variableTypeSym, v.getInit(), false);
 			((Scope) n.getData()).define(variableSym);
 		}
 	}
 
 	/**
-	 * Checks if the name of a variable (including field) is valid, if so, add
-	 * to current scope
+	 * Checks if the name of a variable (or a field) has been used, will throw an exception if it has
 	 * 
-	 * @param type
-	 *            Type of the variable
-	 * @param declaratorId
-	 *            The declaration ID
+	 * @param declaratorId Name of variable
 	 */
 	private void checkName(Object currentScope, VariableDeclaratorId declaratorId) {
 		Symbol declaratorIdSymbol = ((ScopedSymbol) currentScope).resolveThisLevel(declaratorId.toString());
@@ -592,12 +648,14 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 		}
 	}
 
-	private symtab.Type getTypeOfExpression(Expression expression, Object currentScope) {
+	private symtab.Type getTypeOfExpression(Expression expression, Object scope) {
 		symtab.Type type = null;
+		Scope currentScope = (Scope) scope;
 		if (expression != null) {
 			if (expression.getClass() == NameExpr.class) {
-				// System.out.println(expression.toString() + ": named expression ");
-				Symbol expressionTypeSym = ((Scope) currentScope).resolve(expression.toString());
+				// If it's a name, check that it's defined and that its type is a class
+				
+				Symbol expressionTypeSym = currentScope.resolve(expression.toString());
 
 				if (expressionTypeSym == null) {
 					throw new A2SemanticsException(
@@ -605,35 +663,49 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 				}
 				if (!(expressionTypeSym.getType() instanceof symtab.Type)) {
 					throw new A2SemanticsException(
-							expression + " on line " + expression.getBeginLine() + " is not valid");
+							expression + " on line " + expression.getBeginLine() + " is not a valid type");
 				}
 
 				type = expressionTypeSym.getType();
-			} else if(expression.getClass() == ObjectCreationExpr.class){
-				// TODO refactor into method with the if above
-				Symbol expressionTypeSym = ((Scope) currentScope).resolve(((ObjectCreationExpr) expression).getType().toString());
+			} else if (expression.getClass() == ObjectCreationExpr.class) {
+				// If it's a constructor, check that it's constructing a class
 				
-				if (expressionTypeSym == null){
+				// TODO refactor into method with the if above
+				Symbol expressionTypeSym = currentScope
+						.resolve(((ObjectCreationExpr) expression).getType().toString());
+
+				if (expressionTypeSym == null) {
 					throw new A2SemanticsException(
 							expression + " on line " + expression.getBeginLine() + " is not defined");
 				}
+				// Checks that the expression is a class type
 				if (!(expressionTypeSym instanceof symtab.ClassOrInterfaceSymbol)) {
 					throw new A2SemanticsException(
 							expression + " on line " + expression.getBeginLine() + " is not valid");
 				}
-				// Checks that the expression is a class, not interface
-				if(((ClassOrInterfaceSymbol) expressionTypeSym).isInterface()){
+				// Checks that the expression is not an interface
+				if (((ClassOrInterfaceSymbol) expressionTypeSym).isInterface()) {
 					throw new A2SemanticsException(
 							expression + " on line " + expression.getBeginLine() + " is not a class");
 				}
+				
 				type = (symtab.Type) expressionTypeSym;
+			} else if (expression.getClass() == MethodCallExpr.class) {
+				// If it's a method call, check against the method and return method type
+				
+				Symbol methodSym = currentScope.resolve(((MethodCallExpr) expression).getName());
+				
+				checkMethodCall((MethodCallExpr) expression);
+				
+				type = (symtab.Type) currentScope.resolve(((MethodSymbol) methodSym).getReturnType().toString());
+			
 			} else {
 				if (expression.getClass() == IntegerLiteralExpr.class) {
-					type = (symtab.Type) ((Scope) currentScope).resolve("int");
+					type = (symtab.Type) currentScope.resolve("int");
 				} else if (expression.getClass() == StringLiteralExpr.class) {
-					type = (symtab.Type) ((Scope) currentScope).resolve("String");
-				} else if (expression.getClass() == BooleanLiteralExpr.class){
-					type = (symtab.Type) ((Scope) currentScope).resolve("boolean");
+					type = (symtab.Type) currentScope.resolve("String");
+				} else if (expression.getClass() == BooleanLiteralExpr.class) {
+					type = (symtab.Type) currentScope.resolve("boolean");
 				}
 				// TODO other primitive types (and others?)
 				else {
@@ -663,17 +735,17 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(SingleMemberAnnotationExpr n, Object arg) {
-        n.getName().accept(this, arg);
-        n.getMemberValue().accept(this, arg);
+		n.getName().accept(this, arg);
+		n.getMemberValue().accept(this, arg);
 	}
 
 	@Override
 	public void visit(NormalAnnotationExpr n, Object arg) {
-        n.getName().accept(this, arg);
-        for (Iterator<MemberValuePair> i = n.getPairs().iterator(); i.hasNext();) {
-            MemberValuePair m = i.next();
-            m.accept(this, arg);
-        }
+		n.getName().accept(this, arg);
+		for (Iterator<MemberValuePair> i = n.getPairs().iterator(); i.hasNext();) {
+			MemberValuePair m = i.next();
+			m.accept(this, arg);
+		}
 	}
 
 	@Override
@@ -684,16 +756,16 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(ExplicitConstructorInvocationStmt n, Object arg) {
 		if (!n.isThis()) {
-            if (n.getExpr() != null) {
-                n.getExpr().accept(this, arg);
-            }
-        }
-        if (n.getArgs() != null) {
-            for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
-                Expression e = i.next();
-                e.accept(this, arg);
-            }
-        }
+			if (n.getExpr() != null) {
+				n.getExpr().accept(this, arg);
+			}
+		}
+		if (n.getArgs() != null) {
+			for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
+				Expression e = i.next();
+				e.accept(this, arg);
+			}
+		}
 	}
 
 	@Override
@@ -712,7 +784,7 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(BlockStmt n, Object arg) {
 		System.out.println("BlockStmt");
-		if(n.getStmts()!=null){
+		if (n.getStmts() != null) {
 			for (Statement statement : n.getStmts()) {
 				statement.accept(this, arg);
 			}
