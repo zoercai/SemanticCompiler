@@ -31,6 +31,7 @@ public class Test1 {
         eija += b;
         eija = 4++;
         String j = null;
+        Dummy i = null;
         int f, g;
     }
 }

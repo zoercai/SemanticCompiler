@@ -603,10 +603,13 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 			if (v.getInit() != null) {
 				// Checks expression type is the same as variable type
 				symtab.Type typeOfExpression = getTypeOfExpression(v.getInit(), n.getData());
+				
 				if (typeOfExpression == null) {
 					throw new A2SemanticsException("Expression type is not valid on line " + v.getBeginLine());
 				}
-				if ((symtab.Type) variableTypeSym != typeOfExpression) {
+				
+				// Checks that the types are the same (or in the case of null, allowed to be assigned)
+				if ( ((symtab.Type) variableTypeSym != typeOfExpression)  && !( (variableTypeSym.getName().equals("String") || variableTypeSym instanceof ClassOrInterfaceSymbol) && typeOfExpression.getName().equals("null")) ) {
 					throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to " + type
 							+ " on line " + type.getBeginLine());
 				}
@@ -713,8 +716,7 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 				} else if (expression.getClass() == DoubleLiteralExpr.class) {
 					type = (symtab.Type) currentScope.resolve("double");
 				}  else if (expression.getClass() == NullLiteralExpr.class) {
-					// TODO null should not resolve to String
-					type = (symtab.Type) currentScope.resolve("String");
+					type = (symtab.Type) currentScope.resolve("null");
 				} else if (expression.getClass() == StringLiteralExpr.class) {
 					type = (symtab.Type) currentScope.resolve("String");
 				}
