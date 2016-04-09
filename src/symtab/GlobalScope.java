@@ -15,11 +15,12 @@ public class GlobalScope extends BaseScope {
 		define(new BuiltInTypeSymbol("double"));
 		define(new BuiltInTypeSymbol("boolean"));
 		define(new BuiltInTypeSymbol("char"));
+		define(new BuiltInTypeSymbol("null"));
 		
 		define(new ClassOrInterfaceSymbol("String", this, false));
 //		define(new ClassSymbol("HashMap"));
 //		
-//		define(new ClassSymbol("System"));
+		define(new ClassOrInterfaceSymbol("System", this, false));
 //		define(new ClassSymbol("out"));
 		
 		//define(new MethodSymbol("foo", (symtab.Type)resolve("String")));

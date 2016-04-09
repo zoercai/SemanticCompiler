@@ -30,6 +30,8 @@ public class Test1 {
         int eija = b + 4 + 9;
         eija += b;
         eija = b++;
+        boolean lll = false;
+        boolean z = !lll;
         Dummy i = null;
         int f, g;
     }

@@ -106,7 +106,9 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(CompilationUnit n, Object arg) {
-		currentScope = new CompilationUnitSymbol();
+		GlobalScope globalScope = new GlobalScope();
+		
+		currentScope = new CompilationUnitSymbol("Compilation Unit", globalScope);
 
 		n.setData(currentScope);
 
