@@ -1,0 +1,93 @@
+class Foo {
+	void bar() {
+		
+		Foo one = new Foo();
+
+		Foo two;
+
+		two = one;
+
+		int typeInt = 1;
+		boolean typeBool = true;
+		char typeChar = 'c';
+		double typeDouble = 0.1;
+		long typeLong = 1l;
+		float typeFloat = 1;
+		byte typeByte = 1;
+		short typeShort = 1;
+
+		typeDouble = typeInt;
+		typeLong = typeInt;
+		typeFloat = typeInt;
+
+		typeInt = typeChar;
+		typeDouble = typeChar;
+		typeLong = typeChar;
+		typeFloat = typeChar;
+
+		typeDouble = typeLong;
+		typeFloat = typeLong;
+
+		typeDouble = typeFloat;
+
+		typeInt = typeByte;
+		typeDouble = typeByte;
+		typeLong = typeByte;
+		typeFloat = typeByte;
+		typeShort = typeByte;
+
+		typeInt = typeShort;
+		typeDouble = typeShort;
+		typeLong = typeShort;
+		typeFloat = typeShort;
+
+		/*typeChar = (char) typeInt;
+		typeDouble = (double) typeInt;
+		typeLong = (long) typeInt;
+		typeFloat = (float) typeInt;
+		typeByte = (byte) typeInt;
+		typeShort = (short) typeInt;
+
+		typeInt = (int) typeChar;
+		typeDouble = (double) typeChar;
+		typeLong = (long) typeChar;
+		typeFloat = (float) typeChar;
+		typeByte = (byte) typeChar;
+		typeShort = (short) typeChar;
+
+		typeInt = (int) typeDouble;
+		typeChar = (char) typeDouble;
+		typeLong = (long) typeDouble;
+		typeFloat = (float) typeDouble;
+		typeByte = (byte) typeDouble;
+		typeShort = (short) typeDouble;
+
+		typeInt = (int) typeLong;
+		typeChar = (char) typeLong;
+		typeDouble = (double) typeLong;
+		typeFloat = (float) typeLong;
+		typeByte = (byte) typeLong;
+		typeShort = (short) typeLong;
+
+		typeInt = (int) typeFloat;
+		typeChar = (char) typeFloat;
+		typeDouble = (double) typeFloat;
+		typeLong = (long) typeFloat;
+		typeByte = (byte) typeFloat;
+		typeShort = (short) typeFloat;
+
+		typeInt = (int) typeByte;
+		typeChar = (char) typeByte;
+		typeDouble = (double) typeByte;
+		typeLong = (long) typeByte;
+		typeFloat = (float) typeByte;
+		typeShort = (short) typeByte;
+
+		typeInt = (int) typeShort;
+		typeChar = (char) typeShort;
+		typeDouble = (double) typeShort;
+		typeLong = (long) typeShort;
+		typeFloat = (float) typeShort;
+		typeByte = (byte) typeShort;*/
+	}
+}

@@ -1,0 +1,6 @@
+import java.util.HashMap;
+import java.util.Map;
+
+class Foo {
+	Map mine = new HashMap{1:"one",2:"two"};
+}

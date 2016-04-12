@@ -1,0 +1,4 @@
+class InvalidDuplicateField {
+	int something;
+	int something;
+}

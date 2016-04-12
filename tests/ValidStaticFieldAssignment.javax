@@ -1,0 +1,9 @@
+class Foo {
+	void meth() {
+		Bar.b = 3;
+	}
+}
+
+class Bar {
+	static int b = 0;
+}

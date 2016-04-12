@@ -1,0 +1,5 @@
+class Foo {
+	void Bar(int a) {}
+	void Bar(String a) {}
+	void Bar(int a, int b) {}
+}

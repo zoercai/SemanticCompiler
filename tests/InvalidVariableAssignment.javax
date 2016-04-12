@@ -1,0 +1,5 @@
+class InvalidVariableAssignment {
+	void foo() {
+		a = 3;
+	}
+}

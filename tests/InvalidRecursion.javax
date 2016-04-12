@@ -1,0 +1,7 @@
+class Foo {
+	int bar(int i) {
+		char a;
+		a = bar(i);
+		return a;
+	}
+}

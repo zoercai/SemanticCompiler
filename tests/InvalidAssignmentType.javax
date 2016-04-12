@@ -1,0 +1,6 @@
+class Foo {
+	void meth() {
+		int a = 0;
+		a = "";
+	}
+}

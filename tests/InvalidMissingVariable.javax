@@ -1,0 +1,5 @@
+class InvalidVariableUse {
+	void foo() {
+		int a = b;
+	}
+}

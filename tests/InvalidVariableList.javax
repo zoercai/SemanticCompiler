@@ -1,0 +1,5 @@
+class InvalidVariableList {
+	void main () {
+    	int something, something;
+	}
+}
