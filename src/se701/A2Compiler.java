@@ -10,6 +10,7 @@ import japa.parser.ParseException;
 import japa.parser.ast.CompilationUnit;
 import japa.parser.ast.visitor.SillyBreakVisitor;
 import japa.parser.ast.visitor.CheckInheritanceVisitor;
+import japa.parser.ast.visitor.CheckTerminalVisitor;
 import japa.parser.ast.visitor.CreateScopesVisitor;
 import japa.parser.ast.visitor.DefineTerminalVisitor;
 import japa.parser.ast.visitor.DumpVisitor;
@@ -37,9 +38,13 @@ public class A2Compiler {
 		CheckInheritanceVisitor inheritanceVisitor = new CheckInheritanceVisitor();
 		ast.accept(inheritanceVisitor, null);
 		
+		System.out.println("Adding terminals");
+		DefineTerminalVisitor defineTerminalVisitor = new DefineTerminalVisitor();
+		ast.accept(defineTerminalVisitor, null);
+		
 		System.out.println("Checking types");
-		DefineTerminalVisitor terminalVisitor = new DefineTerminalVisitor();
-		ast.accept(terminalVisitor, null);
+		CheckTerminalVisitor checkTerminalVisitor = new CheckTerminalVisitor();
+		ast.accept(checkTerminalVisitor, null);
 		
 		// perform visit 2... etc etc 
 		// ...

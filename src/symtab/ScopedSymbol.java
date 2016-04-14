@@ -47,6 +47,7 @@ public class ScopedSymbol extends Symbol implements Scope {
 		return null;
 	}
 	
+	@Override
 	public Symbol resolveThisLevel(String name){
 		Symbol s = symbols.get(name);
 		if (s != null) {

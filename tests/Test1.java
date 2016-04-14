@@ -1,6 +1,6 @@
 public class Test1 {
 
-    int a, b, f, c;
+    int a, b, c, d;
 
     Dummy dummy = new Dummy();
 
@@ -8,22 +8,27 @@ public class Test1 {
 
     String e = "hi";
 
-    int unassignedField = a;
+    int unassignedFieldGood = a;
 
     public class Dummy extends String {
 
-        String a = "";
+        String b = forwardGood;
 
         int test() {
-            foo(false);
         }
     }
 
     public int foo(boolean x) {
         int a;
+        String o;
+        o = forwardGood;
         Dummy c = new Dummy();
+        {
+            int h;
+            int y = 2;
+        }
+        int varNotGood = 99;
         int h;
-        String o = "";
         int b = 4;
         h = foo(true);
         b = h;
@@ -35,4 +40,6 @@ public class Test1 {
         Dummy i = null;
         int f, g;
     }
+
+    String forwardGood;
 }

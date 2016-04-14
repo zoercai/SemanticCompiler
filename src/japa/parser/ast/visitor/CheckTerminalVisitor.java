@@ -101,7 +101,7 @@ import symtab.ScopedSymbol;
 import symtab.Symbol;
 import symtab.VariableSymbol;
 
-public class DefineTerminalVisitor implements VoidVisitor<Object> {
+public class CheckTerminalVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(Node n, Object arg) {
@@ -149,6 +149,7 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(ClassOrInterfaceDeclaration n, Object arg) {
+		// TODO test interface
 		for (BodyDeclaration member : n.getMembers()) {
 			member.accept(this, arg);
 		}
@@ -215,16 +216,21 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 		Scope currentScope = (Scope) n.getData();
 		Symbol fieldTypeSym = currentScope.resolve(type.toString());
 
-		// Checks the type of the field
-		checkType(type, fieldTypeSym);
-
 		for (Iterator<VariableDeclarator> i = n.getVariables().iterator(); i.hasNext();) {
 			VariableDeclarator v = i.next();
-			
-			// Checks the name of the field
-			checkName(currentScope, v.getId());
-			VariableSymbol variableSym = new VariableSymbol(v.getId().getName(), (symtab.Type) fieldTypeSym, v.getInit(), true, v.getBeginLine(), v.getBeginColumn());
-			((Scope) n.getData()).define(variableSym);
+
+			// Checks expression type is the same as field type
+			if (v.getInit() != null) {
+				symtab.Type typeOfExpression = getTypeOfExpression(v.getInit(), n.getData(), v.getBeginLine(),
+						v.getBeginColumn());
+				if (typeOfExpression == null) {
+					throw new A2SemanticsException("Expression type is not valid on line " + v.getBeginLine());
+				}
+				if ((symtab.Type) fieldTypeSym != typeOfExpression) {
+					throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to " + type
+							+ " on line " + type.getBeginLine());
+				}
+			}
 		}
 	}
 
@@ -371,11 +377,23 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(AssignExpr n, Object arg) {
 		Scope currentScope = (Scope) n.getData();
-		
+
 		// Checks that the variable exists
 		Symbol variableSym = currentScope.resolve(n.getTarget().toString());
-		
-		((VariableSymbol) variableSym).setValueAssigned(n.getValue(), n.getBeginLine(), n.getBeginColumn());
+		if (variableSym == null) {
+			throw new A2SemanticsException(n.getTarget().toString() + " is not defined on line " + n.getBeginLine());
+		}
+
+		// Checks that the expression variable type matches the variable type
+		symtab.Type typeOfExpression = getTypeOfExpression(n.getValue(), n.getData(), n.getBeginLine(),
+				n.getBeginColumn());
+		if (typeOfExpression == null) {
+			throw new A2SemanticsException("Expression type is not valid on line " + n.getBeginLine());
+		}
+		if ((symtab.Type) variableSym.getType() != typeOfExpression) {
+			throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to "
+					+ variableSym.getType().getName() + " on line " + n.getBeginLine());
+		}
 
 		n.getTarget().accept(this, arg);
 		n.getValue().accept(this, arg);
@@ -463,11 +481,58 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 			n.getScope().accept(this, arg);
 		}
 		if (n.getArgs() != null) {
+			// Check if method call arguments exist and types are consistent
+			// with method parameters
+			checkMethodCall(n);
+
 			for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
 				Expression e = i.next();
-				
+
 				e.accept(this, arg);
 			}
+		}
+	}
+
+	/**
+	 * @param n
+	 */
+	private void checkMethodCall(MethodCallExpr expression) {
+		Scope currentScope = (Scope) expression.getData();
+
+		// Check if method exists
+		Symbol methodSym = currentScope.resolve(expression.getName());
+		if (methodSym == null) {
+			throw new A2SemanticsException(expression + " on line " + expression.getBeginLine() + " is not defined");
+		}
+
+		// Check if method call arguments exist and types are consistent with
+		// method parameters
+		List<Parameter> methodParameters = ((MethodSymbol) methodSym).getParameters();
+		List<Expression> methodArguments = expression.getArgs();
+		if (methodParameters != null && methodArguments != null) {
+			// Check number of arguments & parameters are the same
+			if (methodParameters.size() != methodArguments.size()) {
+				throw new A2SemanticsException(
+						"Method call doesn't match method signature on line " + expression.getBeginLine());
+			}
+			// Check types are the same
+			for (int i = 0; i < methodParameters.size(); i++) {
+				Expression argumentExpression = expression.getArgs().get(i);
+				Parameter parameter = methodParameters.get(i);
+
+				// Check argument name exists (by calling getTypeOfExpression,
+				// which also returns the type), and checks if types match
+				if (!getTypeOfExpression(argumentExpression, currentScope, argumentExpression.getBeginLine(),
+						argumentExpression.getBeginColumn()).getName().equals(parameter.getType().toString())) {
+					throw new A2SemanticsException("Method call argument type doesn't match method signature on line "
+							+ expression.getBeginLine());
+				}
+			}
+		} else if (methodParameters == null && methodArguments == null) {
+			// do nothing
+		} else {
+			throw new A2SemanticsException(
+					"Method call doesn't match method signature on line " + expression.getBeginLine());
 		}
 	}
 
@@ -532,28 +597,195 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 			// TODO potentially refactor this and FieldDeclarator into
 			// variableDeclarator visitor
 			VariableDeclarator v = i.next();
-			// System.out.println(v.getId() + " has expression: " + v.getInit());
 
-			// Checks variable name hasn't been defined
-			checkName(n.getData(), v.getId());
+			if (v.getInit() != null) {
+				// Checks expression type is the same as variable type
+				symtab.Type typeOfExpression = getTypeOfExpression(v.getInit(), n.getData(), v.getBeginLine(),
+						v.getBeginColumn());
 
-			// Add variable symbol to scope
-			VariableSymbol variableSym = new VariableSymbol(v.getId().getName(), (symtab.Type) variableTypeSym, v.getInit(), false, v.getBeginLine(), v.getBeginColumn());
-			((Scope) n.getData()).define(variableSym);
+				if (typeOfExpression == null) {
+					throw new A2SemanticsException("Expression type is not valid on line " + v.getBeginLine());
+				}
+
+				// Checks that the types are the same (or in the case of null,
+				// allowed to be assigned)
+				if (((symtab.Type) variableTypeSym != typeOfExpression) && !((variableTypeSym.getName().equals("String")
+						|| variableTypeSym instanceof ClassOrInterfaceSymbol)
+						&& typeOfExpression.getName().equals("null"))) {
+					throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to " + type
+							+ " on line " + type.getBeginLine());
+				}
+			}
 		}
 	}
 
 	/**
-	 * Checks if the name of a variable (or a field) has been used, will throw an exception if it has
+	 * Checks if the name of a variable (or a field) has been used, will throw
+	 * an exception if it has
 	 * 
-	 * @param declaratorId Name of variable
+	 * @param declaratorId
+	 *            Name of variable
 	 */
 	private void checkName(Object currentScope, VariableDeclaratorId declaratorId) {
-		Symbol declaratorIdSymbol = ((Scope) currentScope).resolveThisLevel(declaratorId.toString());
+		Symbol declaratorIdSymbol = ((ScopedSymbol) currentScope).resolveThisLevel(declaratorId.toString());
 		if (declaratorIdSymbol != null) {
 			throw new A2SemanticsException(declaratorId + " on line " + declaratorId.getBeginLine()
 					+ " is already defined. Try another name!");
 		}
+	}
+
+	private symtab.Type getTypeOfExpression(Expression expression, Object scope, int beginLine, int beginColumn) {
+		symtab.Type type = null;
+		Scope currentScope = (Scope) scope;
+
+		if (expression != null) {
+			if (expression.getClass() == NameExpr.class) {
+				// Check that the expression variable is defined and that its
+				// type is a class
+				Symbol expressionSymbol = currentScope.resolve(expression.toString());
+				if (expressionSymbol == null) {
+					throw new A2SemanticsException(
+							expression + " on line " + expression.getBeginLine() + " is not defined");
+				}
+				if (!(expressionSymbol.getType() instanceof symtab.Type)) {
+					throw new A2SemanticsException(
+							expression + " on line " + expression.getBeginLine() + " is not a valid type");
+				}
+
+				// If expression variable/field is from the same scope level or
+				// if expression is from a higher level but is a variable, check
+				// it is declared and assigned a value before current line
+				if (currentScope.resolveThisLevel(expression.toString()) != null
+						|| !((VariableSymbol) expressionSymbol).isField()) {
+					// Checks that the expression variable has been assigned a
+					// value
+					if (((VariableSymbol) expressionSymbol).getLineAssigned() == -1) {
+						throw new A2SemanticsException("Variable \"" + expressionSymbol.getName()
+								+ "\" has not been assigned a value on line " + expression.getBeginLine());
+					}
+
+					// If expression is assigned on a later line to being used
+					if (beginLine < ((VariableSymbol) expressionSymbol).getLineAssigned()) {
+						throw new A2SemanticsException(expression.toString() + " on line " + expression.getBeginLine()
+								+ " is not assigned a value prior to this line");
+					} else {
+						// If expression is assigned on the same line as being
+						// used but after being used
+						if (beginLine == ((VariableSymbol) expressionSymbol).getLineAssigned()
+								&& beginColumn < ((VariableSymbol) expressionSymbol).getColumnAssigned()) {
+							throw new A2SemanticsException(expression.toString() + " on line "
+									+ expression.getBeginLine() + " is not assigned a value prior to its column");
+						}
+					}
+				}
+
+				// Checks that the expression variable (not field, as implicit
+				// value) has been assigned a value
+				if ((!((VariableSymbol) expressionSymbol).isField())
+						&& ((VariableSymbol) expressionSymbol).getValueAssigned() == null) {
+
+				}
+
+				type = expressionSymbol.getType();
+			} else if (expression.getClass() == ObjectCreationExpr.class) {
+				// If it's a constructor, check that it's constructing a class
+				Symbol expressionTypeSym = currentScope.resolve(((ObjectCreationExpr) expression).getType().toString());
+
+				// Checks that the constructor class has been defined
+				if (expressionTypeSym == null) {
+					throw new A2SemanticsException(
+							expression + " on line " + expression.getBeginLine() + " is not defined");
+				}
+				// Checks that the expression is a class type
+				if (!(expressionTypeSym instanceof symtab.ClassOrInterfaceSymbol)) {
+					throw new A2SemanticsException(
+							expression + " on line " + expression.getBeginLine() + " is not valid");
+				}
+				// Checks that the expression is not an interface
+				if (((ClassOrInterfaceSymbol) expressionTypeSym).isInterface()) {
+					throw new A2SemanticsException(
+							expression + " on line " + expression.getBeginLine() + " is not a class");
+				}
+
+				type = (symtab.Type) expressionTypeSym;
+			} else if (expression.getClass() == MethodCallExpr.class) {
+				// If it's a method call, check against the method and return
+				// method type
+
+				Symbol methodSym = currentScope.resolve(((MethodCallExpr) expression).getName());
+
+				checkMethodCall((MethodCallExpr) expression);
+
+				type = (symtab.Type) currentScope.resolve(((MethodSymbol) methodSym).getReturnType().toString());
+
+			} else if (expression.getClass() == BinaryExpr.class) {
+				System.out.println(expression);
+				// If it's an operation expression
+				System.out.println("Binary expression on line: " + expression.getBeginLine());
+				// Check left and right expressions are of the same type
+				symtab.Type leftType = getTypeOfExpression(((BinaryExpr) expression).getLeft(), currentScope,
+						expression.getBeginLine(), expression.getBeginColumn());
+				symtab.Type rightType = getTypeOfExpression(((BinaryExpr) expression).getRight(), currentScope,
+						expression.getBeginLine(), expression.getBeginColumn());
+				if (leftType != rightType) {
+					throw new A2SemanticsException("Cannot add " + leftType.getName() + " to " + rightType.getName()
+							+ " on line " + expression.getBeginLine());
+				}
+				type = leftType;
+			} else if (expression.getClass() == UnaryExpr.class) {
+				type = getTypeOfExpression(((UnaryExpr) expression).getExpr(), currentScope, expression.getBeginLine(),
+						expression.getBeginColumn());
+
+				// Checks expression operand can be used with the operator
+				Operator operator = ((UnaryExpr) expression).getOperator();
+				if ((!isNumberClass(type)) && isNumberOperator(operator)) {
+					throw new A2SemanticsException("Bad operand type " + type.getName() + " for unary operator "
+							+ operator + " on line " + expression.getBeginLine());
+				}
+				if ((!type.getName().equals("boolean")) && operator == Operator.not) {
+					throw new A2SemanticsException("Bad operand type " + type.getName() + " for unary operator "
+							+ operator + " on line " + expression.getBeginLine());
+				}
+			} else {
+				if (expression.getClass() == IntegerLiteralExpr.class) {
+					type = (symtab.Type) currentScope.resolve("int");
+				} else if (expression.getClass() == BooleanLiteralExpr.class) {
+					type = (symtab.Type) currentScope.resolve("boolean");
+				} else if (expression.getClass() == LongLiteralExpr.class) {
+					type = (symtab.Type) currentScope.resolve("long");
+				} else if (expression.getClass() == CharLiteralExpr.class) {
+					type = (symtab.Type) currentScope.resolve("char");
+				} else if (expression.getClass() == DoubleLiteralExpr.class) {
+					type = (symtab.Type) currentScope.resolve("double");
+				} else if (expression.getClass() == NullLiteralExpr.class) {
+					type = (symtab.Type) currentScope.resolve("null");
+				} else if (expression.getClass() == StringLiteralExpr.class) {
+					type = (symtab.Type) currentScope.resolve("String");
+				}
+				// TODO other types
+				else {
+					System.out.println("Add " + expression.getClass() + " to getTypeofExpression helper method");
+				}
+			}
+		}
+		return type;
+	}
+
+	private boolean isNumberClass(symtab.Type type) {
+		if (type.getName().equals("int") || type.getName().equals("long") || type.getName().equals("char")
+				|| type.getName().equals("double")) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean isNumberOperator(Operator operator) {
+		if (operator == Operator.positive || operator == Operator.negative || operator == Operator.preIncrement
+				|| operator == Operator.preDecrement || operator == Operator.posIncrement
+				|| operator == Operator.preDecrement) {
+			return true;
+		}
+		return false;
 	}
 
 	private void checkType(Object type, Symbol symOfVarType) {

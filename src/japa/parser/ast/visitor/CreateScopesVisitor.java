@@ -91,6 +91,7 @@ import symtab.ClassOrInterfaceSymbol;
 import symtab.CompilationUnitSymbol;
 import symtab.ConstructorSymbol;
 import symtab.GlobalScope;
+import symtab.LocalScope;
 import symtab.MethodSymbol;
 import symtab.Scope;
 import symtab.VariableSymbol;
@@ -565,9 +566,12 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(BlockStmt n, Object arg) {
 		if(n.getStmts()!=null){
+			currentScope = new LocalScope(currentScope);
+			n.setData(currentScope);
 			for (Statement statement : n.getStmts()) {
 				statement.accept(this, arg);
 			}
+			currentScope = currentScope.getEnclosingScope();
 		}
 	}
 
