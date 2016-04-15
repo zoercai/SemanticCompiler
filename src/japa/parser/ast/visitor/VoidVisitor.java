@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 Júlio Vilmar Gesser.
+ * Copyright (C) 2007 Jï¿½lio Vilmar Gesser.
  * 
  * This file is part of Java 1.5 parser and Abstract Syntax Tree.
  *
@@ -56,6 +56,8 @@ import japa.parser.ast.expr.ConditionalExpr;
 import japa.parser.ast.expr.DoubleLiteralExpr;
 import japa.parser.ast.expr.EnclosedExpr;
 import japa.parser.ast.expr.FieldAccessExpr;
+import japa.parser.ast.expr.HashMapCreationExpr;
+import japa.parser.ast.expr.HashMapInitializerExpr;
 import japa.parser.ast.expr.InstanceOfExpr;
 import japa.parser.ast.expr.IntegerLiteralExpr;
 import japa.parser.ast.expr.IntegerLiteralMinValueExpr;
@@ -175,6 +177,10 @@ public interface VoidVisitor<A> {
     public void visit(ArrayCreationExpr n, A arg);
 
     public void visit(ArrayInitializerExpr n, A arg);
+    
+    public void visit(HashMapCreationExpr n, A arg);
+    
+    public void visit(HashMapInitializerExpr n, A arg);
 
     public void visit(AssignExpr n, A arg);
 

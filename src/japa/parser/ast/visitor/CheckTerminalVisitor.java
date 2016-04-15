@@ -41,6 +41,8 @@ import japa.parser.ast.expr.DoubleLiteralExpr;
 import japa.parser.ast.expr.EnclosedExpr;
 import japa.parser.ast.expr.Expression;
 import japa.parser.ast.expr.FieldAccessExpr;
+import japa.parser.ast.expr.HashMapCreationExpr;
+import japa.parser.ast.expr.HashMapInitializerExpr;
 import japa.parser.ast.expr.InstanceOfExpr;
 import japa.parser.ast.expr.IntegerLiteralExpr;
 import japa.parser.ast.expr.IntegerLiteralMinValueExpr;
@@ -382,10 +384,12 @@ public class CheckTerminalVisitor implements VoidVisitor<Object> {
 			// Checks that the variable exists
 			Symbol variableSym = currentScope.resolve(n.getTarget().toString());
 			if (variableSym == null) {
-				throw new A2SemanticsException(n.getTarget().toString() + " is not defined on line " + n.getBeginLine());
+				throw new A2SemanticsException(
+						n.getTarget().toString() + " is not defined on line " + n.getBeginLine());
 			}
 
-			// Checks that the expression variable type matches the variable type
+			// Checks that the expression variable type matches the variable
+			// type
 			symtab.Type typeOfExpression = getTypeOfExpression(n.getValue(), n.getData(), n.getBeginLine(),
 					n.getBeginColumn());
 			if (typeOfExpression == null) {
@@ -434,8 +438,9 @@ public class CheckTerminalVisitor implements VoidVisitor<Object> {
 			}
 
 			// TODO more parts
-			
-			// Checks that the expression variable type matches the variable type
+
+			// Checks that the expression variable type matches the variable
+			// type
 			symtab.Type typeOfExpression = getTypeOfExpression(n.getValue(), n.getData(), n.getBeginLine(),
 					n.getBeginColumn());
 			if (typeOfExpression == null) {
@@ -447,8 +452,6 @@ public class CheckTerminalVisitor implements VoidVisitor<Object> {
 						+ fieldSymbol.getType().getName() + " on line " + n.getBeginLine());
 			}
 		}
-
-		
 
 		n.getTarget().accept(this, arg);
 		n.getValue().accept(this, arg);
@@ -665,11 +668,21 @@ public class CheckTerminalVisitor implements VoidVisitor<Object> {
 
 				// Checks that the types are the same (or in the case of null,
 				// allowed to be assigned)
-				if (((symtab.Type) variableTypeSym != typeOfExpression) && !((variableTypeSym.getName().equals("String")
-						|| variableTypeSym instanceof ClassOrInterfaceSymbol)
-						&& typeOfExpression.getName().equals("null"))) {
-					throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to " + type
-							+ " on line " + type.getBeginLine());
+				if (((symtab.Type) variableTypeSym != typeOfExpression)) {
+
+					if (!((variableTypeSym.getName().equals("String")
+							|| variableTypeSym instanceof ClassOrInterfaceSymbol)
+							&& typeOfExpression.getName().equals("null"))
+							&& !(variableTypeSym.getClass() == ClassOrInterfaceSymbol.class
+									&& typeOfExpression.getClass() == ClassOrInterfaceSymbol.class
+									&& (((ClassOrInterfaceSymbol) typeOfExpression).getImplementsList()
+											.contains(variableTypeSym)
+											|| ((ClassOrInterfaceSymbol) typeOfExpression)
+													.resolveParent(variableTypeSym.getName()) != null)))
+					{
+						throw new A2SemanticsException("Cannot convert from " + typeOfExpression.getName() + " to "
+								+ type + " on line " + type.getBeginLine());
+					}
 				}
 			}
 		}
@@ -802,6 +815,10 @@ public class CheckTerminalVisitor implements VoidVisitor<Object> {
 					throw new A2SemanticsException("Bad operand type " + type.getName() + " for unary operator "
 							+ operator + " on line " + expression.getBeginLine());
 				}
+			} else if (expression.getClass() == HashMapCreationExpr.class) {
+
+				type = (symtab.Type) currentScope.resolve("HashMap");
+
 			} else {
 				if (expression.getClass() == IntegerLiteralExpr.class) {
 					type = (symtab.Type) currentScope.resolve("int");
@@ -1044,6 +1061,18 @@ public class CheckTerminalVisitor implements VoidVisitor<Object> {
 	public void visit(CatchClause n, Object arg) {
 		n.getExcept().accept(this, arg);
 		n.getCatchBlock().accept(this, arg);
+	}
+
+	@Override
+	public void visit(HashMapCreationExpr n, Object arg) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void visit(HashMapInitializerExpr n, Object arg) {
+		// TODO Auto-generated method stub
+
 	}
 
 }

@@ -40,6 +40,8 @@ import japa.parser.ast.expr.DoubleLiteralExpr;
 import japa.parser.ast.expr.EnclosedExpr;
 import japa.parser.ast.expr.Expression;
 import japa.parser.ast.expr.FieldAccessExpr;
+import japa.parser.ast.expr.HashMapCreationExpr;
+import japa.parser.ast.expr.HashMapInitializerExpr;
 import japa.parser.ast.expr.InstanceOfExpr;
 import japa.parser.ast.expr.IntegerLiteralExpr;
 import japa.parser.ast.expr.IntegerLiteralMinValueExpr;
@@ -701,6 +703,18 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 	public void visit(CatchClause n, Object arg) {
 		n.getExcept().accept(this, arg);
 		n.getCatchBlock().accept(this, arg);
+	}
+
+	@Override
+	public void visit(HashMapCreationExpr n, Object arg) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(HashMapInitializerExpr n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

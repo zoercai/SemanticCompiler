@@ -41,6 +41,8 @@ import japa.parser.ast.expr.DoubleLiteralExpr;
 import japa.parser.ast.expr.EnclosedExpr;
 import japa.parser.ast.expr.Expression;
 import japa.parser.ast.expr.FieldAccessExpr;
+import japa.parser.ast.expr.HashMapCreationExpr;
+import japa.parser.ast.expr.HashMapInitializerExpr;
 import japa.parser.ast.expr.InstanceOfExpr;
 import japa.parser.ast.expr.IntegerLiteralExpr;
 import japa.parser.ast.expr.IntegerLiteralMinValueExpr;
@@ -770,6 +772,40 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 	public void visit(CatchClause n, Object arg) {
 		n.getExcept().accept(this, arg);
 		n.getCatchBlock().accept(this, arg);
+	}
+
+	@Override
+	public void visit(HashMapCreationExpr n, Object arg) {
+		
+//		Scope currentScope = (Scope) n.getData();
+//		Type type = n.getType();
+//		
+//		System.out.println(type);
+		
+		// Check that the type of the variable is valid (i.e., a class)
+
+//				Symbol variableTypeSym = currentScope.resolve(type.toString());
+//				checkType(type, variableTypeSym);
+//
+//				for (Iterator<VariableDeclarator> i = n.getVars().iterator(); i.hasNext();) {
+//					// TODO potentially refactor this and FieldDeclarator into
+//					// variableDeclarator visitor
+//					VariableDeclarator v = i.next();
+//					// System.out.println(v.getId() + " has expression: " + v.getInit());
+//
+//					// Checks variable name hasn't been defined
+//					checkName(n.getData(), v.getId());
+//
+//					// Add variable symbol to scope
+//					VariableSymbol variableSym = new VariableSymbol(v.getId().getName(), (symtab.Type) variableTypeSym, v.getInit(), false, v.getBeginLine(), v.getBeginColumn());
+//					((Scope) n.getData()).define(variableSym);
+//				}
+	}
+
+	@Override
+	public void visit(HashMapInitializerExpr n, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

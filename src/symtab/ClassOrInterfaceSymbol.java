@@ -47,5 +47,17 @@ public class ClassOrInterfaceSymbol extends ScopedSymbol implements Type {
 		return null;
 	}
 	
+	public Symbol resolveParent(String name){
+		if(this.extendParent!=null){
+			if(this.extendParent.getName()==name){
+				return this.extendParent;
+			} else{
+				return this.extendParent.resolveParent(name);
+			}
+		} else {
+			return null;
+		}
+	}
+	
 	
 }

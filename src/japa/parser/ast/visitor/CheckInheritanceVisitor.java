@@ -40,6 +40,8 @@ import japa.parser.ast.expr.ConditionalExpr;
 import japa.parser.ast.expr.DoubleLiteralExpr;
 import japa.parser.ast.expr.EnclosedExpr;
 import japa.parser.ast.expr.FieldAccessExpr;
+import japa.parser.ast.expr.HashMapCreationExpr;
+import japa.parser.ast.expr.HashMapInitializerExpr;
 import japa.parser.ast.expr.InstanceOfExpr;
 import japa.parser.ast.expr.IntegerLiteralExpr;
 import japa.parser.ast.expr.IntegerLiteralMinValueExpr;
@@ -621,6 +623,18 @@ public class CheckInheritanceVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(CatchClause n, Object arg) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(HashMapCreationExpr n, Object arg) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void visit(HashMapInitializerExpr n, Object arg) {
 		// TODO Auto-generated method stub
 		
 	}

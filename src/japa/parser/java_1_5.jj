@@ -2296,6 +2296,7 @@ List ArgumentList():
 Expression AllocationExpression(Expression scope):
 {
 	Expression ret;
+	Expression hashMapExpression;
 	Type type;
 	Object[] arr = null;
 	List typeArgs = null;
@@ -2316,8 +2317,8 @@ Expression AllocationExpression(Expression scope):
 	  	}
 	  }
 	|
-	  [ typeArgs = TypeArguments() ]
-	  type = ClassOrInterfaceType() 
+	  LOOKAHEAD(3) [ typeArgs = TypeArguments() ]
+	  type = ClassOrInterfaceType()
 	  (
 	      arr = ArrayDimsAndInits()
 		  {
@@ -2331,9 +2332,30 @@ Expression AllocationExpression(Expression scope):
 	      args = Arguments() [ LOOKAHEAD(2) anonymousBody = ClassOrInterfaceBody(false) ]
 	      { ret = new ObjectCreationExpr(line, column, scope, (ClassOrInterfaceType) type, typeArgs, args, anonymousBody); }
 	    )
+	  |
+	  	type = ClassOrInterfaceType() hashMapExpression = HashMapInitializer()	  	{ ret = new HashMapCreationExpr(line, column, type, typeArgs, (HashMapInitializerExpr)hashMapExpression); }
   )
   { return ret; }
 }
+
+//zoe
+HashMapInitializerExpr HashMapInitializer():
+{
+	HashMap<Expression,Expression > values = new HashMap<Expression, Expression >();
+	Expression key;
+	Expression val;
+	int line;
+	int column;
+}
+{
+  "{" {line=token.beginLine; column=token.beginColumn;} [ (key = VariableInitializer() ":" val = VariableInitializer() ){values.put(key,val); }  ( LOOKAHEAD(2) "," key = VariableInitializer() ":" val = VariableInitializer() {values.put(key,val);} )* ] [ "," ] "}"
+  { return new HashMapInitializerExpr(line, column, values); }
+}
+
+
+//ArrayInitializerExpr ArrayInitializer()://{//	List values = null;//	Expression val;//	int line;//	int column;//}//{//  "{" {line=token.beginLine; column=token.beginColumn;} [ val = VariableInitializer() { values = add(values, val); } ( LOOKAHEAD(2) "," val = VariableInitializer() { values = add(values, val); } )* ] [ "," ] "}"//  { return new ArrayInitializerExpr(line, column, values); }//}
+
+
 
 /*
  * The third LOOKAHEAD specification below is to parse to PrimarySuffix
