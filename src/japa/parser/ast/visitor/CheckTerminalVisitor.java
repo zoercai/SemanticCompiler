@@ -791,9 +791,9 @@ public class CheckTerminalVisitor implements VoidVisitor<Object> {
 				type = (symtab.Type) currentScope.resolve(((MethodSymbol) methodSym).getReturnType().toString());
 
 			} else if (expression.getClass() == BinaryExpr.class) {
-				System.out.println(expression);
+				// System.out.println(expression);
 				// If it's an operation expression
-				System.out.println("Binary expression on line: " + expression.getBeginLine());
+				// System.out.println("Binary expression on line: " + expression.getBeginLine());
 				// Check left and right expressions are of the same type
 				symtab.Type leftType = getTypeOfExpression(((BinaryExpr) expression).getLeft(), currentScope,
 						expression.getBeginLine(), expression.getBeginColumn());
@@ -840,7 +840,7 @@ public class CheckTerminalVisitor implements VoidVisitor<Object> {
 				}
 				// TODO other types
 				else {
-					System.out.println("Add " + expression.getClass() + " to getTypeofExpression helper method");
+					// System.out.println("Add " + expression.getClass() + " to getTypeofExpression helper method");
 				}
 			}
 		}
@@ -871,7 +871,7 @@ public class CheckTerminalVisitor implements VoidVisitor<Object> {
 		}
 
 		if (!(symOfVarType instanceof symtab.Type)) {
-			// System.out.println(symOfVariableType.getClass());
+			// // System.out.println(symOfVariableType.getClass());
 			throw new A2SemanticsException(type + " on line " + ((Node) type).getBeginLine() + " is not a valid type");
 		}
 	}

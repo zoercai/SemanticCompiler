@@ -12,21 +12,21 @@ public class A2MainRunner {
 		/*
 		 * These tests will be testing correctness of your Semantic Analysis visitors. The marker will be using their own files here. 
 		 */
-//		for (int i = 1; i <= 2; i++) { 
-//			String file = "tests"+System.getProperty("file.separator")+"Test"+i+".javax";
-//			try {
-//				A2Compiler.compile(new File(file));
-//				System.out.println(file+" ... OK");
-//			} catch (ParseException e) {
-//				System.err.println(file+" Parser exception... "+e.getMessage());
-//				e.printStackTrace();
-//			} catch (A2SemanticsException e) {
-//				System.err.println(file+" Semantics exception... "+e.getMessage());
-//				e.printStackTrace();
-//			}  catch (FileNotFoundException e) {
-//				e.printStackTrace();
-//			}
-//		}
+		for (int i = 1; i <= 2; i++) { 
+			String file = "tests"+System.getProperty("file.separator")+"Test"+i+".javax";
+			try {
+				A2Compiler.compile(new File(file));
+				 System.out.println(file+" ... OK");
+			} catch (ParseException e) {
+				System.err.println(file+" Parser exception... "+e.getMessage());
+				e.printStackTrace();
+			} catch (A2SemanticsException e) {
+				System.err.println(file+" Semantics exception... "+e.getMessage());
+				e.printStackTrace();
+			}  catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
 		
 		
 //		File folder = new File("tests");
@@ -35,10 +35,10 @@ public class A2MainRunner {
 //		for (File file : listOfFiles) {
 //		    if (file.isFile() && file.toString().contains(".javax")) {
 //		    	try {
-//		    		System.out.println();
-//		    		System.out.println("Compiling..........."+file);
+//		    		// System.out.println();
+//		    		// // System.out.println("Compiling..........."+file);
 //					A2Compiler.compile(file);
-//					System.out.println(file+" ... OK");
+//					// // System.out.println(file+" ... OK");
 //				} catch (ParseException e) {
 //					System.err.println(file+" Parser exception... "+e.getMessage());
 //					e.printStackTrace();

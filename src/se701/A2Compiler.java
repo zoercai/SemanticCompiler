@@ -30,19 +30,19 @@ public class A2Compiler {
 //		SillyBreakVisitor sillyVisitor = new SillyBreakVisitor();
 //		ast.accept(sillyVisitor, null);
 		
-		System.out.println("Adding scope");
+		// System.out.println("Adding scope");
 		CreateScopesVisitor scopesVisitor = new CreateScopesVisitor();
 		ast.accept(scopesVisitor, null);
 		
-		System.out.println("Checking inheritance");
+		// System.out.println("Checking inheritance");
 		CheckInheritanceVisitor inheritanceVisitor = new CheckInheritanceVisitor();
 		ast.accept(inheritanceVisitor, null);
 		
-		System.out.println("Adding terminals");
+		// System.out.println("Adding terminals");
 		DefineTerminalVisitor defineTerminalVisitor = new DefineTerminalVisitor();
 		ast.accept(defineTerminalVisitor, null);
 		
-		System.out.println("Checking types");
+		// System.out.println("Checking types");
 		CheckTerminalVisitor checkTerminalVisitor = new CheckTerminalVisitor();
 		ast.accept(checkTerminalVisitor, null);
 		

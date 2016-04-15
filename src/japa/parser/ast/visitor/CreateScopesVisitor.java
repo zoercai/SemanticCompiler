@@ -439,7 +439,7 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(MethodCallExpr n, Object arg) {
-//		System.out.println(n.getName() + " on line " + n.getBeginLine());
+//		// System.out.println(n.getName() + " on line " + n.getBeginLine());
 		n.setData(currentScope);
 		if (n.getScope() != null) {
             n.getScope().accept(this, arg);

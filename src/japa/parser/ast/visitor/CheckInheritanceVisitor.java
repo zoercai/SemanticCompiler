@@ -143,7 +143,7 @@ public class CheckInheritanceVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(ClassOrInterfaceDeclaration n, Object arg) {
-		System.out.println(n.getName());
+		// System.out.println(n.getName());
 		
 		if(n.getExtends() != null){
 			checkClassOrInterfaceInheritance(n, false);

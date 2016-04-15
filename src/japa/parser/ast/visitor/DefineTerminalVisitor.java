@@ -373,7 +373,7 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(AssignExpr n, Object arg) {
-		System.out.println(n.getTarget());
+		// System.out.println(n.getTarget());
 		
 		Scope currentScope = (Scope) n.getData();
 		
@@ -549,7 +549,7 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 			// TODO potentially refactor this and FieldDeclarator into
 			// variableDeclarator visitor
 			VariableDeclarator v = i.next();
-			// System.out.println(v.getId() + " has expression: " + v.getInit());
+			// // System.out.println(v.getId() + " has expression: " + v.getInit());
 
 			// Checks variable name hasn't been defined
 			checkName(n.getData(), v.getId());
@@ -580,7 +580,7 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 		}
 
 		if (!(symOfVarType instanceof symtab.Type)) {
-			// System.out.println(symOfVariableType.getClass());
+			// // System.out.println(symOfVariableType.getClass());
 			throw new A2SemanticsException(type + " on line " + ((Node) type).getBeginLine() + " is not a valid type");
 		}
 	}
@@ -777,35 +777,10 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(HashMapCreationExpr n, Object arg) {
-		
-//		Type type = n.getType();
-//		
-//		System.out.println(type);
-		
-		// Check that the type of the variable is valid (i.e., a class)
-
-//				Symbol variableTypeSym = currentScope.resolve(type.toString());
-//				checkType(type, variableTypeSym);
-//
-//				for (Iterator<VariableDeclarator> i = n.getVars().iterator(); i.hasNext();) {
-//					// TODO potentially refactor this and FieldDeclarator into
-//					// variableDeclarator visitor
-//					VariableDeclarator v = i.next();
-//					// System.out.println(v.getId() + " has expression: " + v.getInit());
-//
-//					// Checks variable name hasn't been defined
-//					checkName(n.getData(), v.getId());
-//
-//					// Add variable symbol to scope
-//					VariableSymbol variableSym = new VariableSymbol(v.getId().getName(), (symtab.Type) variableTypeSym, v.getInit(), false, v.getBeginLine(), v.getBeginColumn());
-//					((Scope) n.getData()).define(variableSym);
-//				}
 	}
 
 	@Override
 	public void visit(HashMapInitializerExpr n, Object arg) {
-		// TODO Auto-generated method stub
-		
 	}
 
 }
