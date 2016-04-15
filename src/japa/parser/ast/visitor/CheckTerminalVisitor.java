@@ -2,6 +2,7 @@ package japa.parser.ast.visitor;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import japa.parser.ast.BlockComment;
 import japa.parser.ast.CompilationUnit;
@@ -684,6 +685,8 @@ public class CheckTerminalVisitor implements VoidVisitor<Object> {
 								+ type + " on line " + type.getBeginLine());
 					}
 				}
+				
+				v.getInit().accept(this, arg);
 			}
 		}
 	}
@@ -1065,13 +1068,34 @@ public class CheckTerminalVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(HashMapCreationExpr n, Object arg) {
-		// TODO Auto-generated method stub
+		Scope currentScope = (Scope) n.getData();
+		
+		HashMapInitializerExpr mapContent = n.getInitializer();
+		
+		Map<Expression, Expression> map = mapContent.getValues();
 
+		symtab.Type keyType = getTypeOfExpression(map.entrySet().iterator().next().getKey(), currentScope, n.getBeginLine(), n.getBeginColumn());
+		symtab.Type valueType = getTypeOfExpression(map.entrySet().iterator().next().getValue(), currentScope, n.getBeginLine(), n.getBeginColumn());
+		
+		for (Map.Entry<Expression, Expression> entry : map.entrySet()) {
+			symtab.Type currentKeyType = getTypeOfExpression(entry.getKey(), currentScope, n.getBeginLine(), n.getBeginColumn());
+			symtab.Type currentValueType = getTypeOfExpression(entry.getValue(), currentScope, n.getBeginLine(), n.getBeginColumn());
+			
+			if(keyType!=currentKeyType){
+				throw new A2SemanticsException("The type of " + entry.getKey() + " on line " + entry.getKey().getBeginLine() + " is not consistent with the rest in the map");
+			}
+			
+			if(valueType!=currentValueType){
+				throw new A2SemanticsException("The type of " + entry.getValue() + " on line " + entry.getValue().getBeginLine() + " is not consistent with the rest in the map");
+			}
+		}
+		
+		n.setKeyType(map.entrySet().iterator().next().getKey().getClass().getSimpleName().toString().split("Literal")[0]);
+		n.setValueType(map.entrySet().iterator().next().getValue().getClass().getSimpleName().toString().split("Literal")[0]);
 	}
 
 	@Override
 	public void visit(HashMapInitializerExpr n, Object arg) {
-		// TODO Auto-generated method stub
 
 	}
 

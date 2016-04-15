@@ -38,6 +38,10 @@ public final class HashMapCreationExpr extends Expression {
 
     private final HashMapInitializerExpr initializer;
 
+    private String keyType;
+    private String valueType;
+    
+    
     public HashMapCreationExpr(int line, int column, Type type, List<Type> typeArgs, HashMapInitializerExpr initializer) {
         super(line, column);
         this.type = type;
@@ -73,5 +77,21 @@ public final class HashMapCreationExpr extends Expression {
     public <R, A> R accept(GenericVisitor<R, A> v, A arg) {
         return v.visit(this, arg);
     }
+
+	public String getKeyType() {
+		return keyType;
+	}
+
+	public void setKeyType(String keyType) {
+		this.keyType = keyType;
+	}
+
+	public String getValueType() {
+		return valueType;
+	}
+
+	public void setValueType(String valueType) {
+		this.valueType = valueType;
+	}
 
 }

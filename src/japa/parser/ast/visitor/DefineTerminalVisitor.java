@@ -2,6 +2,7 @@ package japa.parser.ast.visitor;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import japa.parser.ast.BlockComment;
 import japa.parser.ast.CompilationUnit;
@@ -777,7 +778,6 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 	@Override
 	public void visit(HashMapCreationExpr n, Object arg) {
 		
-//		Scope currentScope = (Scope) n.getData();
 //		Type type = n.getType();
 //		
 //		System.out.println(type);

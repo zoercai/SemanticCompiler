@@ -114,6 +114,7 @@ import japa.parser.ast.type.WildcardType;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Julio Vilmar Gesser
@@ -916,15 +917,22 @@ public final class DumpVisitor implements VoidVisitor<Object> {
         printModifiers(n.getModifiers());
 
         n.getType().accept(this, arg);
-        printer.print(" ");
+        
+        if(n.getVars()!=null &&  n.getVars().get(0).getInit()!=null && n.getVars().get(0).getInit().getClass()==HashMapCreationExpr.class){
+        	n.getVars().get(0).getInit().accept(this, n);
+        } else {
+        	printer.print(" ");
 
-        for (Iterator<VariableDeclarator> i = n.getVars().iterator(); i.hasNext();) {
-            VariableDeclarator v = i.next();
-            v.accept(this, arg);
-            if (i.hasNext()) {
-                printer.print(", ");
+            for (Iterator<VariableDeclarator> i = n.getVars().iterator(); i.hasNext();) {
+                VariableDeclarator v = i.next();
+                v.accept(this, arg);
+                if (i.hasNext()) {
+                    printer.print(", ");
+                }
             }
         }
+        
+        
     }
 
     public void visit(TypeDeclarationStmt n, Object arg) {
@@ -1302,8 +1310,20 @@ public final class DumpVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(HashMapCreationExpr n, Object arg) {
-		// TODO Auto-generated method stub
-		
+		VariableDeclarationExpr parentExpr = (VariableDeclarationExpr) arg;
+		 printer.print("<"+n.getKeyType()+", "+n.getValueType()+"> "+parentExpr.getVars().get(0).getId());
+		 printer.print(" = new HashMap<>()");
+		 
+		Map<Expression, Expression> map = n.getInitializer().getValues();
+		for (Map.Entry<Expression, Expression> entry : map.entrySet()) {
+			printer.print(";");
+			printer.printLn();
+			printer.print(parentExpr.getVars().get(0).getId()+".put(");
+			printer.print(entry.getKey()+", "+entry.getValue()+")");
+			System.out.println(entry.getKey() + "/" + entry.getValue());
+		}
+		 
+		 
 	}
 
 	@Override

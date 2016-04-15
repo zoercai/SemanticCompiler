@@ -707,14 +707,12 @@ public class CreateScopesVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(HashMapCreationExpr n, Object arg) {
-		// TODO Auto-generated method stub
-		
+		n.setData(currentScope);
 	}
 
 	@Override
 	public void visit(HashMapInitializerExpr n, Object arg) {
-		// TODO Auto-generated method stub
-		
+		n.setData(currentScope);
 	}
 
 }
