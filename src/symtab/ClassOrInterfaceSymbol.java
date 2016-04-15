@@ -8,7 +8,7 @@ import japa.parser.ast.type.ClassOrInterfaceType;
 public class ClassOrInterfaceSymbol extends ScopedSymbol implements Type {
 	
 	private boolean isInterface;
-	private List<ClassOrInterfaceSymbol> extendsList = new LinkedList<ClassOrInterfaceSymbol>();
+	private ClassOrInterfaceSymbol extendParent;
 	private List<ClassOrInterfaceSymbol> implementsList = new LinkedList<ClassOrInterfaceSymbol>();
 	
 	public ClassOrInterfaceSymbol(String name, Scope enclosingScope, boolean isInterface) {
@@ -20,8 +20,8 @@ public class ClassOrInterfaceSymbol extends ScopedSymbol implements Type {
 		return isInterface;
 	}
 
-	public List<ClassOrInterfaceSymbol> getExtendsList() {
-		return extendsList;
+	public ClassOrInterfaceSymbol getExtendsList() {
+		return extendParent;
 	}
 	
 	public List<ClassOrInterfaceSymbol> getImplementsList() {
@@ -29,13 +29,23 @@ public class ClassOrInterfaceSymbol extends ScopedSymbol implements Type {
 	}
 
 	public void addExtend(ClassOrInterfaceSymbol parentSym) {
-		this.extendsList.add(parentSym);
+		this.extendParent = parentSym;
 	}
 
 	public void addImplement(ClassOrInterfaceSymbol parentSym) {
 		this.implementsList.add(parentSym);
 	}
 
+	public Symbol resolveMember(String name){
+		Symbol s = symbols.get(name);
+		if(s!=null)
+			return s;
+		
+		if(extendParent!=null){
+			return resolveMember(extendParent.toString());
+		}
+		return null;
+	}
 	
 	
 }

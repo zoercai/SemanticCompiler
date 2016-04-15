@@ -1,0 +1,16 @@
+public class Test {
+	public int a;
+ 	class Point {
+    	int x, y;
+    	void reset() {
+			a = 45; // OK
+			x = 0; y = 0; 
+		}
+	}
+	
+	void hehe(){
+		Point p = new Point();
+		p.x = 3;	//OK
+		p.a = 23;	//not OK
+	}
+}

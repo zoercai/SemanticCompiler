@@ -5,5 +5,5 @@ class Foo {
 }
 
 class Bar {
-	static void b() {}
+	static void c() {}
 }

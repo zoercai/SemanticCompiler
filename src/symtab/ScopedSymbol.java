@@ -6,7 +6,7 @@ import se701.A2SemanticsException;
 
 public class ScopedSymbol extends Symbol implements Scope {
 
-	private HashMap<String, Symbol> symbols = new HashMap<String, Symbol>();
+	protected HashMap<String, Symbol> symbols = new HashMap<String, Symbol>();
 	protected Scope enclosingScope = null;
 
 	public ScopedSymbol(String name, Scope enclosingScope) {

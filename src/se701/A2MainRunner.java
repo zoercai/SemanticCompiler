@@ -28,20 +28,42 @@ public class A2MainRunner {
 			}
 		}
 		
+		
+//		File folder = new File("tests");
+//		File[] listOfFiles = folder.listFiles();
+//
+//		for (File file : listOfFiles) {
+//		    if (file.isFile() && file.toString().contains(".javax")) {
+//		    	try {
+//		    		System.out.println();
+//		    		System.out.println("Compiling..........."+file);
+//					A2Compiler.compile(file);
+//					System.out.println(file+" ... OK");
+//				} catch (ParseException e) {
+//					System.err.println(file+" Parser exception... "+e.getMessage());
+//					e.printStackTrace();
+//				} catch (A2SemanticsException e) {
+//					System.err.println(file+" Semantics exception... "+e.getMessage());
+//					e.printStackTrace();
+//				}  catch (FileNotFoundException e) {
+//					e.printStackTrace();
+//				}
+//		    }
+//		}
 
 		/*
 		 * This is to compile StudentSample.javax. The marker will run with the supplied *.javax 
 		 * file which is associated to your selected feature. 		 
 		 */
-//		try {
-//			A2Compiler.compile(new File("src"+System.getProperty("file.separator")+"se701"+System.getProperty("file.separator")+"StudentSample.javax"));
-//			System.out.println("src/se701.StudentSample compiled correctly");
-//		} catch (ParseException e) {
-//			System.err.println("Sample file should not have any errors! ");
-//		} catch (A2SemanticsException e) {
-//			System.err.println("Sample file should not have any errors! ");
-//		}  catch (FileNotFoundException e) {
-//			e.printStackTrace();
-//		}
+		try {
+			A2Compiler.compile(new File("src"+System.getProperty("file.separator")+"se701"+System.getProperty("file.separator")+"StudentSample.javax"));
+			System.out.println("src/se701.StudentSample compiled correctly");
+		} catch (ParseException e) {
+			System.err.println("Sample file should not have any errors! ");
+		} catch (A2SemanticsException e) {
+			System.err.println("Sample file should not have any errors! ");
+		}  catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
 	}
 }

@@ -370,13 +370,27 @@ public class DefineTerminalVisitor implements VoidVisitor<Object> {
 
 	@Override
 	public void visit(AssignExpr n, Object arg) {
+		System.out.println(n.getTarget());
+		
 		Scope currentScope = (Scope) n.getData();
 		
-		// Checks that the variable exists
-		Symbol variableSym = currentScope.resolve(n.getTarget().toString());
+		if(!n.getTarget().toString().contains(".")){
+			// Checks that the variable exists
+			Symbol variableSym = currentScope.resolve(n.getTarget().toString());
+			
+			if(variableSym==null){
+				throw new A2SemanticsException(n.getTarget() + " on line " + n.getBeginLine() + " is not defined");
+			}
+			((VariableSymbol) variableSym).setValueAssigned(n.getValue(), n.getBeginLine(), n.getBeginColumn());
+		} else {
+			// Add symbol to table
+			currentScope.define(new VariableSymbol(n.getTarget().toString(), null, n.getValue(), true, n.getBeginLine(), n.getBeginColumn()));
+			
+			
+			// TODO check type of field matches type of assign in checkTerminalVisitor
+			
+		}
 		
-		((VariableSymbol) variableSym).setValueAssigned(n.getValue(), n.getBeginLine(), n.getBeginColumn());
-
 		n.getTarget().accept(this, arg);
 		n.getValue().accept(this, arg);
 	}

@@ -1,6 +1,6 @@
 class Foo {
 	void meth() {
-		Bar.b = 3;
+		Bar.b = 4;
 	}
 }
 
