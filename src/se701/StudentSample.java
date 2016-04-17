@@ -12,10 +12,10 @@ public class StudentSample {
 
     public static void sampleMethod() {
         Map<String, String> states = new HashMap<>();
-        states.put("AK", "Alaska");
-        states.put("WY", "Wyoming");
-        states.put("AL", "Alabama");
         states.put("AZ", "Arizona");
+        states.put("AK", "Alaska");
+        states.put("AL", "Alabama");
+        states.put("WY", "Wyoming");
         for (Entry<String, String> state : states.entrySet()) {
             System.out.println(state.getKey() + " " + state.getValue());
         }
